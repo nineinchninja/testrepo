@@ -1,0 +1,172 @@
+#
+# A fatal error has been detected by the Java Runtime Environment:
+#
+#  Internal Error (constantPoolOop.cpp:90), pid=4224, tid=3848
+#  guarantee(error != (symbolOop)NULL) failed: tag mismatch with resolution error table
+#
+# JRE version: 6.0_37-b06
+# Java VM: Java HotSpot(TM) 64-Bit Server VM (20.12-b01 mixed mode windows-amd64 compressed oops)
+# If you would like to submit a bug report, please visit:
+#   http://java.sun.com/webapps/bugreport/crash.jsp
+#
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00000000084a7800):  JavaThread "11202659@qtp-557591935-2" [_thread_in_vm, id=3848, stack(0x000000000a780000,0x000000000a880000)]
+
+Stack: [0x000000000a780000,0x000000000a880000]
+Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+j  com.bloodandsand.beans.MatchResultBean.getRiposte(Lcom/bloodandsand/beans/GladiatorDataBean;Ljava/lang/String;)Ljava/lang/String;+241
+j  com.bloodandsand.beans.MatchResultBean.completeRound()Ljava/lang/String;+211
+j  com.bloodandsand.core.GladiatorCombat.doGet(Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;)V+313
+j  javax.servlet.http.HttpServlet.service(Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;)V+35
+j  javax.servlet.http.HttpServlet.service(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;)V+30
+j  org.mortbay.jetty.servlet.ServletHolder.handle(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;)V+179
+j  org.mortbay.jetty.servlet.ServletHandler$CachedChain.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;)V+103
+j  com.google.appengine.api.socket.dev.DevSocketFilter.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;Ljavax/servlet/FilterChain;)V+12
+j  org.mortbay.jetty.servlet.ServletHandler$CachedChain.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;)V+53
+j  com.google.appengine.tools.development.ResponseRewriterFilter.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;Ljavax/servlet/FilterChain;)V+54
+j  org.mortbay.jetty.servlet.ServletHandler$CachedChain.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;)V+53
+j  com.google.appengine.tools.development.HeaderVerificationFilter.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;Ljavax/servlet/FilterChain;)V+12
+j  org.mortbay.jetty.servlet.ServletHandler$CachedChain.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;)V+53
+j  com.google.appengine.api.blobstore.dev.ServeBlobFilter.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;Ljavax/servlet/FilterChain;)V+17
+j  org.mortbay.jetty.servlet.ServletHandler$CachedChain.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;)V+53
+j  com.google.apphosting.utils.servlet.TransactionCleanupFilter.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;Ljavax/servlet/FilterChain;)V+3
+j  org.mortbay.jetty.servlet.ServletHandler$CachedChain.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;)V+53
+j  com.google.appengine.tools.development.StaticFileFilter.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;Ljavax/servlet/FilterChain;)V+260
+j  org.mortbay.jetty.servlet.ServletHandler$CachedChain.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;)V+53
+j  com.google.appengine.tools.development.BackendServersFilter.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;Ljavax/servlet/FilterChain;)V+103
+j  org.mortbay.jetty.servlet.ServletHandler$CachedChain.doFilter(Ljavax/servlet/ServletRequest;Ljavax/servlet/ServletResponse;)V+53
+j  org.mortbay.jetty.servlet.ServletHandler.handle(Ljava/lang/String;Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;I)V+470
+j  org.mortbay.jetty.security.SecurityHandler.handle(Ljava/lang/String;Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;I)V+206
+j  org.mortbay.jetty.servlet.SessionHandler.handle(Ljava/lang/String;Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;I)V+225
+j  org.mortbay.jetty.handler.ContextHandler.handle(Ljava/lang/String;Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;I)V+714
+j  org.mortbay.jetty.webapp.WebAppContext.handle(Ljava/lang/String;Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;I)V+25
+j  com.google.appengine.tools.development.DevAppEngineWebAppContext.handle(Ljava/lang/String;Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;I)V+59
+j  org.mortbay.jetty.handler.HandlerWrapper.handle(Ljava/lang/String;Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;I)V+23
+j  com.google.appengine.tools.development.JettyContainerService$ApiProxyHandler.handle(Ljava/lang/String;Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;I)V+137
+j  org.mortbay.jetty.handler.HandlerWrapper.handle(Ljava/lang/String;Ljavax/servlet/http/HttpServletRequest;Ljavax/servlet/http/HttpServletResponse;I)V+23
+j  org.mortbay.jetty.Server.handle(Lorg/mortbay/jetty/HttpConnection;)V+114
+j  org.mortbay.jetty.HttpConnection.handleRequest()V+138
+j  org.mortbay.jetty.HttpConnection$RequestHandler.headerComplete()V+438
+j  org.mortbay.jetty.HttpParser.parseNext()J+1797
+j  org.mortbay.jetty.HttpParser.parseAvailable()J+1
+j  org.mortbay.jetty.HttpConnection.handle()V+124
+j  org.mortbay.io.nio.SelectChannelEndPoint.run()V+4
+j  org.mortbay.thread.QueuedThreadPool$PoolThread.run()V+25
+v  ~StubRoutines::call_stub
+
+---------------  P R O C E S S  ---------------
+
+Java Threads: ( => current thread )
+=>0x00000000084a7800 JavaThread "11202659@qtp-557591935-2" [_thread_in_vm, id=3848, stack(0x000000000a780000,0x000000000a880000)]
+  0x0000000008ac3800 JavaThread "Timer-1" daemon [_thread_blocked, id=3080, stack(0x000000000a950000,0x000000000aa50000)]
+  0x0000000007ef8000 JavaThread "Timer-0" daemon [_thread_blocked, id=3112, stack(0x00000000096b0000,0x00000000097b0000)]
+  0x000000000863c800 JavaThread "1746453592@qtp-557591935-1 - Acceptor0 SelectChannelConnector@127.0.0.1:8888" [_thread_in_native, id=5656, stack(0x00000000095b0000,0x00000000096b0000)]
+  0x0000000007455800 JavaThread "Low Memory Detector" daemon [_thread_blocked, id=3396, stack(0x00000000079e0000,0x0000000007ae0000)]
+  0x0000000007452000 JavaThread "C2 CompilerThread1" daemon [_thread_blocked, id=4784, stack(0x00000000078e0000,0x00000000079e0000)]
+  0x000000000744d000 JavaThread "C2 CompilerThread0" daemon [_thread_blocked, id=5532, stack(0x00000000077e0000,0x00000000078e0000)]
+  0x00000000065e9000 JavaThread "JDWP Command Reader" daemon [_thread_in_native, id=3040, stack(0x00000000072e0000,0x00000000073e0000)]
+  0x00000000065e7800 JavaThread "JDWP Event Helper Thread" daemon [_thread_blocked, id=1848, stack(0x00000000071e0000,0x00000000072e0000)]
+  0x00000000065e0000 JavaThread "JDWP Transport Listener: dt_socket" daemon [_thread_blocked, id=2308, stack(0x0000000006f90000,0x0000000007090000)]
+  0x00000000065d6800 JavaThread "Attach Listener" daemon [_thread_blocked, id=4316, stack(0x0000000006880000,0x0000000006980000)]
+  0x00000000065d1800 JavaThread "Signal Dispatcher" daemon [_thread_blocked, id=5520, stack(0x0000000006780000,0x0000000006880000)]
+  0x000000000052e800 JavaThread "Finalizer" daemon [_thread_blocked, id=2328, stack(0x0000000006480000,0x0000000006580000)]
+  0x0000000000527800 JavaThread "Reference Handler" daemon [_thread_blocked, id=2348, stack(0x0000000006380000,0x0000000006480000)]
+  0x000000000028d800 JavaThread "main" [_thread_blocked, id=5156, stack(0x0000000002450000,0x0000000002550000)]
+
+Other Threads:
+  0x0000000000521800 VMThread [stack: 0x0000000006280000,0x0000000006380000] [id=3428]
+  0x0000000007483000 WatcherThread [stack: 0x0000000007ae0000,0x0000000007be0000] [id=1308]
+
+VM state:not at safepoint (normal execution)
+
+VM Mutex/Monitor currently owned by a thread: None
+
+Heap
+ PSYoungGen      total 38208K, used 21121K [0x00000000f5560000, 0x00000000f8000000, 0x0000000100000000)
+  eden space 32768K, 47% used [0x00000000f5560000,0x00000000f64b1240,0x00000000f7560000)
+  from space 5440K, 99% used [0x00000000f7ab0000,0x00000000f7fff380,0x00000000f8000000)
+  to   space 5440K, 0% used [0x00000000f7560000,0x00000000f7560000,0x00000000f7ab0000)
+ PSOldGen        total 87296K, used 525K [0x00000000e0000000, 0x00000000e5540000, 0x00000000f5560000)
+  object space 87296K, 0% used [0x00000000e0000000,0x00000000e0083498,0x00000000e5540000)
+ PSPermGen       total 21248K, used 20263K [0x00000000dae00000, 0x00000000dc2c0000, 0x00000000e0000000)
+  object space 21248K, 95% used [0x00000000dae00000,0x00000000dc1c9d60,0x00000000dc2c0000)
+
+Code Cache  [0x0000000002750000, 0x00000000029c0000, 0x0000000005750000)
+ total_blobs=516 nmethods=236 adapters=241 free_code_cache=48921088 largest_free_block=108608
+
+Dynamic libraries:
+0x0000000000400000 - 0x000000000042f000 	C:\Program Files\Java\jdk1.6.0_37\bin\javaw.exe
+0x00000000776a0000 - 0x0000000077849000 	C:\Windows\SYSTEM32\ntdll.dll
+0x0000000077480000 - 0x000000007759f000 	C:\Windows\system32\kernel32.dll
+0x000007fefd0f0000 - 0x000007fefd15c000 	C:\Windows\system32\KERNELBASE.dll
+0x000007fefd350000 - 0x000007fefd42b000 	C:\Windows\system32\ADVAPI32.dll
+0x000007fefd820000 - 0x000007fefd8bf000 	C:\Windows\system32\msvcrt.dll
+0x000007fefd740000 - 0x000007fefd75f000 	C:\Windows\SYSTEM32\sechost.dll
+0x000007fefec30000 - 0x000007fefed5d000 	C:\Windows\system32\RPCRT4.dll
+0x00000000775a0000 - 0x000000007769a000 	C:\Windows\system32\USER32.dll
+0x000007fefe650000 - 0x000007fefe6b7000 	C:\Windows\system32\GDI32.dll
+0x000007fefe820000 - 0x000007fefe82e000 	C:\Windows\system32\LPK.dll
+0x000007fefd280000 - 0x000007fefd349000 	C:\Windows\system32\USP10.dll
+0x000007fefd760000 - 0x000007fefd78e000 	C:\Windows\system32\IMM32.DLL
+0x000007fefe710000 - 0x000007fefe819000 	C:\Windows\system32\MSCTF.dll
+0x000000006d8b0000 - 0x000000006e06b000 	C:\Program Files\Java\jdk1.6.0_37\jre\bin\server\jvm.dll
+0x000007fefbaf0000 - 0x000007fefbb2b000 	C:\Windows\system32\WINMM.dll
+0x000000006d820000 - 0x000000006d82e000 	C:\Program Files\Java\jdk1.6.0_37\jre\bin\verify.dll
+0x000000006d450000 - 0x000000006d477000 	C:\Program Files\Java\jdk1.6.0_37\jre\bin\java.dll
+0x000000006d4c0000 - 0x000000006d4f4000 	C:\Program Files\Java\jdk1.6.0_37\jre\bin\jdwp.dll
+0x000000006d6e0000 - 0x000000006d6e8000 	C:\Program Files\Java\jdk1.6.0_37\jre\bin\npt.dll
+0x000000006d400000 - 0x000000006d420000 	C:\Program Files\Java\jdk1.6.0_37\jre\bin\instrument.dll
+0x000000006d870000 - 0x000000006d882000 	C:\Program Files\Java\jdk1.6.0_37\jre\bin\zip.dll
+0x000000006d310000 - 0x000000006d319000 	C:\Program Files\Java\jdk1.6.0_37\jre\bin\dt_socket.dll
+0x000007fefe6c0000 - 0x000007fefe70d000 	C:\Windows\system32\WS2_32.dll
+0x000007fefd790000 - 0x000007fefd798000 	C:\Windows\system32\NSI.dll
+0x000007fefba10000 - 0x000007fefba25000 	C:\Windows\system32\NLAapi.dll
+0x000007fef3f50000 - 0x000007fef3f65000 	C:\Windows\system32\napinsp.dll
+0x000007fef3f30000 - 0x000007fef3f49000 	C:\Windows\system32\pnrpnsp.dll
+0x000007fef3f20000 - 0x000007fef3f30000 	C:\Windows\system32\wshbth.dll
+0x000007fefc720000 - 0x000007fefc775000 	C:\Windows\System32\mswsock.dll
+0x000007fefc5a0000 - 0x000007fefc5fb000 	C:\Windows\system32\DNSAPI.dll
+0x000007fef3f10000 - 0x000007fef3f1b000 	C:\Windows\System32\winrnr.dll
+0x000007fefa5f0000 - 0x000007fefa617000 	C:\Windows\system32\IPHLPAPI.DLL
+0x000007fefa5e0000 - 0x000007fefa5eb000 	C:\Windows\system32\WINNSI.DLL
+0x000007fefa470000 - 0x000007fefa4c3000 	C:\Windows\System32\fwpuclnt.dll
+0x000007fef8460000 - 0x000007fef8468000 	C:\Windows\system32\rasadhlp.dll
+0x000007fefc0e0000 - 0x000007fefc0e7000 	C:\Windows\System32\wshtcpip.dll
+0x000007fefc780000 - 0x000007fefc797000 	C:\Windows\system32\CRYPTSP.dll
+0x000007fefc480000 - 0x000007fefc4c7000 	C:\Windows\system32\rsaenh.dll
+0x000007fefc1f0000 - 0x000007fefc20e000 	C:\Windows\system32\USERENV.dll
+0x000007fefceb0000 - 0x000007fefcebf000 	C:\Windows\system32\profapi.dll
+0x000007fefcde0000 - 0x000007fefcdef000 	C:\Windows\system32\CRYPTBASE.dll
+0x000000006d6b0000 - 0x000000006d6c7000 	C:\Program Files\Java\jdk1.6.0_37\jre\bin\net.dll
+0x000007fefc710000 - 0x000007fefc717000 	C:\Windows\System32\wship6.dll
+0x000000006d6d0000 - 0x000000006d6db000 	C:\Program Files\Java\jdk1.6.0_37\jre\bin\nio.dll
+0x0000000077870000 - 0x0000000077877000 	C:\Windows\system32\PSAPI.DLL
+
+VM Arguments:
+jvm_args: -agentlib:jdwp=transport=dt_socket,suspend=y,address=localhost:51249 -Ddatastore.default_high_rep_job_policy_unapplied_job_pct=50 -Xmx512m -javaagent:C:\Users\dewie\Google\appengine-java-sdk-1.7.3\lib\agent\appengine-agent.jar -Dfile.encoding=Cp1252 
+java_command: com.google.appengine.tools.development.DevAppServerMain --port=8888 C:\Users\Public\Documents\Documents\HTML5Projects\Blood and Sand\bloodandsand\war
+Launcher Type: SUN_STANDARD
+
+Environment Variables:
+PATH=C:\Program Files\Java\jdk1.6.0_37\jre\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Intel\WiFi\bin\;C:\Program Files\Common Files\Intel\WirelessCommon\;C:\Program Files (x86)\Common Files\HP\Digital Imaging\bin;C:\Program Files (x86)\HP\Digital Imaging\bin\;C:\Program Files (x86)\HP\Digital Imaging\bin\Qt\Qt 4.3.3;C:\Program Files\Java\jdk1.7.0_10\;C:Program Files\Java\jdk1.6.0_37
+USERNAME=dewie
+OS=Windows_NT
+PROCESSOR_IDENTIFIER=Intel64 Family 6 Model 37 Stepping 5, GenuineIntel
+
+
+
+---------------  S Y S T E M  ---------------
+
+OS: Windows 7 , 64 bit Build 7601 Service Pack 1
+
+CPU:total 4 (2 cores per cpu, 2 threads per core) family 6 model 37 stepping 5, cmov, cx8, fxsr, mmx, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, ht
+
+Memory: 4k page, physical 8378196k(4875820k free), swap 16754540k(12562636k free)
+
+vm_info: Java HotSpot(TM) 64-Bit Server VM (20.12-b01) for windows-amd64 JRE (1.6.0_37-b06), built on Sep 24 2012 11:45:14 by "java_re" with MS VC++ 8.0 (VS2005)
+
+time: Sat Jan 05 20:00:51 2013
+elapsed time: 61 seconds
+
