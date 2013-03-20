@@ -36,6 +36,8 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 	private String status;
 	private String userLevel; 
 	
+	private Entity thisEntity = new Entity(accountEntity);
+	
 	public LudusDataBean ludus; 
 	
 	private static final Logger log = Logger.getLogger(BaseServlet.class.getName());
@@ -43,16 +45,32 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 	
 	public UserDataBean(){
 		
+		setUpEntity();
+		
 	}
 	
+	private void setUpEntity(){
+				
+		thisEntity.setProperty("userName", userName);
+		thisEntity.setProperty("passwordHash", passwordHash);
+		thisEntity.setProperty("email", emailAddress);
+		thisEntity.setProperty("status", status);
+		thisEntity.setProperty("userLevel", userLevel);
+		thisEntity.setProperty("created", createdDate);	
+		thisEntity.setProperty("lastSeen", lastSeen);		
+	}	
+	
 	public boolean populateUserDataBean(String UserName){
-		Entity userEnt = findUserEntityByName(UserName);
-		if (userEnt == null){
+		thisEntity = findUserEntityByName(UserName);
+		if (thisEntity == null){
 			return false;
 		} else {
 			//set up the user variables relevant to web page rendering
-			setUserName(userEnt.getProperty("username").toString());
-			setUserLevel(userEnt.getProperty("userLevel").toString());			
+			userName = (String)thisEntity.getProperty("userName");
+			userLevel = (String) thisEntity.getProperty("userLevel");	
+			emailAddress = (String) thisEntity.getProperty("email");
+			lastSeen = (Date)thisEntity.getProperty("lastSeen");
+			createdDate = (Date)thisEntity.getProperty("createdDate");
 			
 			//attach the ludus and gladiator variables relevant to web page rendering
 
@@ -70,6 +88,7 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 			}		
 			ludusBean.setGladiators(gladlist);
 			setLudus(ludusBean);
+			setLastSeen(new Date());
 			return true;
 		}
 	}
@@ -86,20 +105,18 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 		createdDate = new Date();
 		//saves a new user accepting all required properties in the method call
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Key accountKey = KeyFactory.createKey(accountKindName, accountGroup);	
-		Entity usr = new Entity(accountEntity, accountKey);		
-		Entity newLudus = new Entity("ludus", usr.getKey());
+				
+		Entity newLudus = new Entity(ludusEntity, thisEntity.getKey());
 		Transaction txn = datastore.beginTransaction();
 		try {		
 			setPasswordHash(passHash);
+			setUserName(name);
+			setEmailAddress(emailAdd);
+			setStatus(stat);
+			setUserLevel(userlvl);
+			setCreatedDate(createdDate);			
 			
-			usr.setProperty("username", name);
-			usr.setProperty("passwordHash", passwordHash);
-			usr.setProperty("email", emailAdd);
-			usr.setProperty("status", stat);
-			usr.setProperty("userLevel", userlvl);
-			usr.setProperty("created", createdDate);
-		    datastore.put(usr);		    
+		    datastore.put(thisEntity);		    
 		    
 		    newLudus.setProperty("availableGold", 100);
 		    newLudus.setProperty("wageredGold", 0);
@@ -116,13 +133,20 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 		return true;
 	}
 	
+	private void setCreatedDate(Date createdDate2) {
+		this.createdDate = createdDate2;
+		thisEntity.setProperty("created", createdDate);		
+	}
+
 	public Boolean saveNewUser(){
 		//saves the user assuming that all properties have been set
 		createdDate = new Date();
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Key accountKey = KeyFactory.createKey(accountKindName, accountGroup);	
-		Entity usr = new Entity(accountEntity, accountKey);		
-		Entity newLudus = new Entity("ludus", usr.getKey());
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();			
+		
+		if (thisEntity == null){
+			setUpEntity();
+		}
+		Entity newLudus = new Entity(ludusEntity, thisEntity.getKey());
 		if (passwordHash == null || passwordHash == "" ||
 				userName == null || userName == "" ||
 				emailAddress == null    || emailAddress ==  ""
@@ -133,44 +157,58 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 		}else{			
 			Transaction txn = datastore.beginTransaction();
 			try {											
-				usr.setProperty("username", userName);
-				usr.setProperty("passwordHash", passwordHash);
-				usr.setProperty("email", emailAddress);
-				usr.setProperty("status", status);
-				usr.setProperty("userLevel", userLevel);
-				usr.setProperty("created", createdDate);
-			    datastore.put(usr);
+				setUpEntity();
+			    datastore.put(thisEntity);
 				//create a new ludus for the new user	
 			    newLudus.setProperty("availableGold", 100);
 			    newLudus.setProperty("wageredGold", 0);
 			    newLudus.setProperty("weeklyCosts", 0);
-			    datastore.put(newLudus);
-	
+			    datastore.put(newLudus);	
 			    txn.commit();
 			} finally {
 			    if (txn.isActive()) {
 			        txn.rollback();
 			        log.warning("Save New User transaction failed: rolled back");
 			    }
-			}		
+			}					
 			return true;
+		}
+	}
+	
+	public void saveUser(){
+		//saves the user assuming the entity exists
+		//note only saves the user details, not the ludus
+		if (thisEntity != null){
+			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+			Transaction txn = datastore.beginTransaction();
+			try {
+				datastore.put(thisEntity);
+			} finally {
+				if (txn.isActive()) {
+			        txn.rollback();
+			        log.warning("Save New User transaction failed: rolled back");
+				}
+			}
 		}
 	}
 	
 	public Boolean attemptLogin(String userName, String pwd) throws NoSuchAlgorithmException, InvalidKeySpecException {
 		//wrapper for the find user and check password functions
-		Entity userExists = null;
+		//Entity userExists = null;
 		Boolean passwordCorrect = false;
 		
-		userExists = findUserEntityByName(userName);
-		if (userExists != null){
-			passwordCorrect = checkPassword(pwd, userExists.getProperty("passwordHash").toString());
+		thisEntity = findUserEntityByName(userName);
+		if (thisEntity != null){
+			log.info("found user");
+			passwordCorrect = checkPassword(pwd, thisEntity.getProperty("passwordHash").toString());
 			if (passwordCorrect){
 				return true;
 			} else {
+				log.info("password wrong");
 				return false;
 			}
 		} else {
+		log.info("did not find user entity");
 		return false;
 		}
 	}
@@ -178,21 +216,24 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 
 	public void setPasswordHash(String pwd) throws NoSuchAlgorithmException, InvalidKeySpecException{
 		passwordHash = PasswordHash.createHash(pwd);
+		thisEntity.setProperty("passwordHash", pwd);		
 	}
 	
-	public String setLastSeen(){
-		return lastSeen.toString();
+	public void setLastSeen(Date lstSeen){
+		this.lastSeen = lstSeen;
+		thisEntity.setProperty("lastSeen", lstSeen);
 	}
 	
 	public void setEmailAddress(String emailIn){
 		emailAddress = emailIn;
+		thisEntity.setProperty("email", emailIn);		
 	}
 		
 	public Boolean setNewEmailAddress(String emailIn){	
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Key accountKey = KeyFactory.createKey("account", accountGroup);	
+		//Key accountKey = KeyFactory.createKey("account", accountGroup);	
 		
-		Query q = new Query("account", accountKey);
+		Query q = new Query(accountEntity);
         q.isKeysOnly();
         q.setFilter(new FilterPredicate ("email", FilterOperator.EQUAL, emailIn));
     	FetchOptions username_search =
@@ -200,18 +241,19 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
         int results = datastore.prepare(q).countEntities(username_search);
         if (results > 0){
         	return false;
-        }
+        } else {
         //if the query returns 0 results, set the user name variable
-        emailAddress = emailIn;
-		return true;
+	        setEmailAddress(emailIn);	        			
+			return true;
+        }		
 
 	}
-	public Entity findUserEntityByName(String name){
+	public Entity findUserEntityByName(String name){//a general function for finding users. Probably should be moved to baseServlet
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Key accountKey = KeyFactory.createKey("account", accountGroup);	
-		Query q = new Query("account", accountKey);
+		//Key accountKey = KeyFactory.createKey("account", accountGroup);	
+		Query q = new Query(accountEntity);
 
-        q.setFilter(new FilterPredicate ("username", FilterOperator.EQUAL, name.toLowerCase()));
+        q.setFilter(new FilterPredicate ("userName", FilterOperator.EQUAL, name.toLowerCase()));
         Entity results = datastore.prepare(q).asSingleEntity();
         
         return results;
@@ -226,7 +268,7 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 		Entity usr = findUserEntityByName(usrName);
 		Key usrKey = usr.getKey();
 		
-		Query ludusQuery = new Query("ludus").setAncestor(usrKey);
+		Query ludusQuery = new Query(ludusEntity).setAncestor(usrKey);
 		Entity ludus = datastore.prepare(ludusQuery).asSingleEntity();
 		return ludus;
 	}
@@ -234,11 +276,11 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 	public Boolean setNewUserName(String usrname){
 		//checks to see if the name is available
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Key accountKey = KeyFactory.createKey("account", accountGroup);	
+		//Key accountKey = KeyFactory.createKey("account", accountGroup);	
 	
-		Query q = new Query("account", accountKey);
+		Query q = new Query(accountEntity);
         q.isKeysOnly();
-        q.setFilter(new FilterPredicate ("username", FilterOperator.EQUAL, usrname));
+        q.setFilter(new FilterPredicate ("userName", FilterOperator.EQUAL, usrname));
     	FetchOptions username_search =
     		    FetchOptions.Builder.withLimit(5);
         int results = datastore.prepare(q).countEntities(username_search);
@@ -246,7 +288,7 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
         	return false;
         }
         //if the query returns 0 results, set the user name variable
-        userName = usrname;
+        setUserName(usrname);        
 		return true;
 	}
 	
@@ -267,10 +309,13 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 	
 	public void setStatus(String stts){
 		status = stts;
+		thisEntity.setProperty("status", stts);		
 	}
 	
 	public void setUserName(String usrname){
 		this.userName = usrname;
+		thisEntity.setProperty("userName", usrname);		
+		
 	}	
 	
 	public void setLudus(LudusDataBean ludus){
@@ -279,9 +324,9 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 	
 	public List<Entity> getUsersGladiators(String usrname){
 		List<Entity> gladiators = null;		
-		Key gladKey = KeyFactory.createKey(gladiatorKindName, gladiatorGroup);	
+		//Key gladKey = KeyFactory.createKey(gladiatorKindName, gladiatorGroup);	
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Query q = new Query("Gladiator", gladKey);
+		Query q = new Query(gladiatorEntity);
         Filter u = new FilterPredicate("owner", FilterOperator.EQUAL, usrname);
         q.setFilter(u);
     	FetchOptions user_gladiator_search =
@@ -301,7 +346,8 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 	
 	public void setUserLevel(String userLevel){
 		
-		this.userLevel =userLevel; 
+		this.userLevel = userLevel; 
+		thisEntity.setProperty("userLevel", userLevel);
 	}
 	
 	public String getUserLevel(){

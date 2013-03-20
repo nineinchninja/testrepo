@@ -15,7 +15,7 @@
 </head>
 <body>
 <a href="/logout" class="login-link">logout</a>
-<span class="main-title">Welcome to your Ludus </span>
+<span class="main-title">Welcome to your Ludus ${UserData.userName}</span>
 <hr>
 <table class="table-navigation">
 <tr>
@@ -24,7 +24,7 @@
 	
 	<td><a href="/gladiatortraining" class="navigation-link">Train and manage your gladiators</td>
 	<td><a href="/challenges" class="navigation-link">Arrange fights</a></td>
-	<td>Manage your school</td>
+	<td><a href="/results" class="navigation-link">Recent Results</a></td>
 </tr>
 </table>
 <h2>The status of your gladiator business:</h2>
@@ -56,7 +56,7 @@
 </c:if>
 <table class="table-results">
 <tr>
-<th class="table-header">Name</th><th class="table-header">Status</th><th class="table-header">Wins</th><th class="table-header">Losses</th><th class="table-header">Popularity</th>
+<th class="table-header">Name</th><th class="table-header">Status</th><th class="table-header">Wins</th><th class="table-header">Losses</th><th class="table-header">Ties</th><th class="table-header">Popularity</th>
 </tr>
 <c:forEach var="gladiator" items='${UserData.ludus.gladiators}'>
 
@@ -74,6 +74,7 @@
 <td ><c:out value='${gladiator.status}' /></td>
 <td ><c:out value='${gladiator.wins}' /></td>
 <td ><c:out value='${gladiator.losses}' /></td>
+<td ><c:out value='${gladiator.ties}' /></td>
 <td ><c:out value='${gladiator.popularity}' /></td>
 </tr>
 </c:forEach>

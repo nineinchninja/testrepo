@@ -6,7 +6,7 @@ package com.bloodandsand.core;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -14,20 +14,23 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.swing.SortOrder;
 
 
 import com.bloodandsand.beans.GladiatorChallengeBean;
 import com.bloodandsand.beans.GladiatorDataBean;
 import com.bloodandsand.beans.MatchResultBean;
+import com.bloodandsand.beans.TournamentDataBean;
 import com.bloodandsand.utilities.BaseServlet;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.SortDirection;
+import com.google.appengine.api.datastore.Transaction;
 import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
@@ -70,12 +73,15 @@ public class GladiatorCombat extends BaseServlet{
 	Fighter incumbant;
 	
 	public MatchResultBean results_bean;
+	private TournamentDataBean tournament;
 		
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException{
 		long startTime = + System.currentTimeMillis();
 		log.info("Start of getting matchups: " + startTime);
-		getGladiatorMatches();
+		
+		getGladiatorMatches();//gets all of the matches that are set to 'accepted' changes all other matches to expired
+		
 		long startMatchesTime = System.currentTimeMillis();
 		log.info("Total Time for getting matchups: " + (startTime - startMatchesTime));
 		Iterator<GladiatorChallengeBean> it = matches.iterator();
@@ -121,6 +127,8 @@ public class GladiatorCombat extends BaseServlet{
 			//incumbant wins
 			incumbant.gldtr.addWin(); //adds a match to the total and increments total matches
 			log.info(incumbant.fighterName + " declared winner!");
+			challenger.gldtr.addLoss();
+			results_bean.setWinner("incumbant.fighterName");
 			if (challenger.status.equals("Dead")){
 				challenger.gldtr.setStatus("DEAD");
 			}
@@ -128,7 +136,9 @@ public class GladiatorCombat extends BaseServlet{
 			if ( incumbant.status.equals("Dead") || incumbant.status.equals("Concedes") ){
 				//challenger wins
 				challenger.gldtr.addWin(); //adds a match to the total and increments total matches
-				log.info(challenger.fighterName + " declard winner!");
+				incumbant.gldtr.addLoss();
+				log.info(challenger.fighterName + " declared winner!");
+				results_bean.setWinner("challenger.fighterName");
 				if (incumbant.status.equals("Dead")){
 					incumbant.gldtr.setStatus("DEAD");
 				}
@@ -136,11 +146,14 @@ public class GladiatorCombat extends BaseServlet{
 				//tie
 				challenger.gldtr.addTie();
 				incumbant.gldtr.addTie();
+				results_bean.setWinner("Tie");
 				log.info("Match declared a draw");
 			}
 		}
 		//store all data
-		
+		challenger.gldtr.saveGladiator();
+		incumbant.gldtr.saveGladiator();
+		results_bean.saveNewResults(tournament);
 	}
 
 	private void resetFighters() {
@@ -378,22 +391,23 @@ public class GladiatorCombat extends BaseServlet{
 
 	private void getGladiatorMatches(){
 		//clears the list to be sure to start fresh, then queries the db for accepted matches.
-		matches.clear();		
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Query q = new Query("challenge");
-		Filter accepted = new FilterPredicate("status", FilterOperator.EQUAL, "ACCEPTED");
-		q.setFilter(accepted);	
-		PreparedQuery preparedQuery = datastore.prepare(q);
-		// the 200 should be less than 1000
-		FetchOptions options = FetchOptions.Builder.withChunkSize(200);
-        //List<Entity> ents = datastore.prepare(q).asList(null);
-        for (Entity match : preparedQuery.asIterable(options)){
-        	matches.add(new GladiatorChallengeBean(match, true));
-        }		
+		//
+		matches.clear();
+		//first get all the matches that are ready to go
+		// get the next tournament and all related matches
+		
+		GladiatorChallengeBean temp = new GladiatorChallengeBean();
+		
+		tournament = temp.getTournament();
+		
+		for (GladiatorChallengeBean match: tournament.executeTournament()){
+			matches.add(match);
+		}		
+        
 	}
 		
 	
-
+//******************************************************************************************************************
 	private class Fighter{
 		
 		private static final long DAMAGED_STAMINA_COST = 5;
@@ -480,8 +494,9 @@ public class GladiatorCombat extends BaseServlet{
 			baseBlockChance = gldtr.getStrength() + gldtr.getSpeed() + weaponBlockBonus;
 			baseInjuryResistance = (gldtr.getStrength() + gldtr.getHeat() + baseStamina);
 			restBonus = (int)gldtr.getConstitution()/3;
-
-			status = "Fit";			
+			
+			//set all the variables that will fluctuate during the fight to the starting points
+			status = gldtr.getStatus();			
 			currentPower = basePower;
 			currentStamina = baseStamina;
 			currentRiposteChance = baseRiposteChance;

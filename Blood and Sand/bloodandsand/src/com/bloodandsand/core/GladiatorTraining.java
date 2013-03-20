@@ -70,7 +70,7 @@ public class GladiatorTraining  extends BaseServlet{
 					if ( newTraining != null && !newTraining.equals("No change")){						
 						log.info("New training value should be: " + newTraining);						
 						gbean.setNewTraining(newTraining);
-						gbean.saveGladiator(gbean.getKey());
+						gbean.saveGladiator();
 						changed = true;
 					}				
 				}

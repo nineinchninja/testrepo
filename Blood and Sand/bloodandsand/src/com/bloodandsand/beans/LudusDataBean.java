@@ -40,18 +40,8 @@ public class LudusDataBean extends CoreBean implements java.io.Serializable{
 		availableGold = (Long) luds.getProperty("availableGold");
 		wageredGold = (Long) luds.getProperty("wageredGold");
 		weeklyCosts = (Long) luds.getProperty("weeklyCosts");
-	}
+	}	
 	
-	public LudusDataBean (String userName){
-
-		//getting the ludus data from the datastore or memcache
-		UserDataBean usr = new UserDataBean();
-
-		Entity luds = usr.findUserLudus(userName);
-		availableGold = (Long) luds.getProperty("availableGold");
-		wageredGold = (Long) luds.getProperty("wageredGold");
-		weeklyCosts = (Long) luds.getProperty("weeklyCosts");
-	}
 	public void setAvailableGold (Long availableGold){
 		this.availableGold = availableGold;		
 	}

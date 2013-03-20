@@ -24,6 +24,7 @@ import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
+import com.google.appengine.api.datastore.Query.SortDirection;
 
 
 public class GladiatorChallengeBean extends CoreBean implements Serializable {
@@ -55,6 +56,8 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 	
 	protected static final Logger log = Logger.getLogger(GladiatorChallengeBean.class.getName());	
 	
+	private Entity thisEntity = new Entity(challengeEntity);
+	
 	public GladiatorChallengeBean(){
 		/*
 		 * TODO
@@ -62,11 +65,13 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 	}
 	
 	public GladiatorChallengeBean(Entity challenge, boolean getGladiators){
+		thisEntity = challenge;
+
 		this.challengeDate = (Date) challenge.getProperty("challengeDate");
-		String temp = (String) challenge.getProperty("challengerKey");
-		this.challengerKey = KeyFactory.stringToKey(temp);
-		temp = (String) challenge.getProperty("incumbantKey");
-		this.incumbantKey = KeyFactory.stringToKey(temp);
+		
+		this.challengerKey = (Key)challenge.getProperty("challengerKey");
+		this.incumbantKey = (Key)challenge.getProperty("incumbantKey");
+		
 		
 		this.gladiatorChallengeKey = challenge.getKey();
 		
@@ -90,6 +95,39 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		
 		this.wager = wager;
 		this.status = Status.INITIATED;
+		TournamentDataBean tourn = getTournament();
+		Entity temp = new Entity(challengeEntity, tourn.getDataStoreKey());
+		thisEntity = temp;
+		setUpEntity();
+	}
+	
+	private void setUpEntity(){
+		
+		thisEntity.setProperty("challengeDate",this.challengeDate);
+		thisEntity.setProperty("challengerKey", this.challengerKey);
+		thisEntity.setProperty("incumbantKey", this.incumbantKey);
+		thisEntity.setProperty("wager", this.wager);
+		thisEntity.setProperty("status",this.status.toString());
+
+	}
+	
+	public TournamentDataBean getTournament(){
+		List<Entity> tournaments = null;
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Query trn = new Query(tournamentEntity);
+		Filter pnding = new FilterPredicate("status", FilterOperator.EQUAL, "Pending");
+		trn.setFilter(pnding);
+		trn.addSort("eventDate", SortDirection.ASCENDING);
+		
+		tournaments = datastore.prepare(trn).asList(FetchOptions.Builder.withDefaults().limit(MAX_TOURNAMENTS));
+		if (tournaments == null || tournaments.size() == 0){//for those odd situations where there are no tournaments
+			log.info("Creating new tournament");
+			TournamentDataBean tournament = new TournamentDataBean();
+			tournament.saveTournament();
+			return tournament;
+		} else {
+			return new TournamentDataBean (tournaments.get(0), false);
+		}
 	}
 	
 	public GladiatorChallengeBean createDummyChallenge(){
@@ -99,14 +137,13 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		c.challengeDate = new Date();
 		c.challenger = g.getDummyGladiator();
 		c.incumbant = g.getDummyGladiator();
-		//this.challengerKey = KeyFactory.stringToKey("gladiatorchallenger");
-		//this.incumbantKey = KeyFactory.stringToKey("gladiatorincumbant");
+
 		c.challenger.setName("challenger");
 		c.challenger.setOwner("owner2");
 		c.incumbant.setName("incumbant");
 		c.incumbant.setOwner("owner1");
 		c.wager = 10;
-		
+		setUpEntity();
 		return c;
 	}
 	
@@ -153,20 +190,12 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 				
 		//which looks the challenge up in the ds and updates it rather than saving a new one		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Entity challEnt;
-		
-		try {			
-			challEnt = datastore.get(this.gladiatorChallengeKey);
-		} catch (EntityNotFoundException e) {
-			log.info("GladiatorChallengeBean.java: Didn't find the challenge when using key search");
-			e.printStackTrace();
-			return;
-		}
 				
 		Transaction txn = datastore.beginTransaction();
-		challEnt = populateChallengeEntity(challEnt);
+		setUpEntity();
+
 		try {					
-		    datastore.put(challEnt);
+		    datastore.put(thisEntity);
 		    txn.commit();
 		} finally {
 		    if (txn.isActive()) {
@@ -177,15 +206,20 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 	}
 
 	public void expireChallenge(){
-		status = Status.EXPIRED;		
+		status = Status.EXPIRED;
+		thisEntity.setProperty("status",this.status.toString());
 	}
 	
 	public void declineChallenge(){
 		this.status = Status.DECLINED;
+
+		thisEntity.setProperty("status",this.status.toString());
 	}
 	
 	public void rescindChallenge(){
 		status = Status.CANCELED;
+
+		thisEntity.setProperty("status",this.status.toString());
 	}
 	
 	public Status getStatusEnum(){
@@ -197,7 +231,9 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 	}
 	
 	public void setStatus(Status sts){
-		this.status = sts;
+		this.status = sts;	
+
+		thisEntity.setProperty("status",this.status.toString());
 	}
 	
 	public void findChallenger(){
@@ -237,25 +273,15 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		}
 	}
 	
-	private Entity populateChallengeEntity(Entity ent){
-		ent.setProperty("challengeDate", challengeDate);
-		ent.setProperty("challengerKey", challenger.getKey());
-				
-		ent.setProperty("incumbantKey", incumbant.getKey());
-		ent.setProperty("wager", wager);
-		
-		ent.setProperty("status", status.toString());
-		return ent;
-	}
 	
 	public void saveNewChallenge(){
 		//ensure that all required fields are completed before initiating this method
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Entity c = new Entity(challengeEntity);
+
 		Transaction txn = datastore.beginTransaction();
-		c = populateChallengeEntity(c);
+
 		try {					
-		    datastore.put(c);
+		    datastore.put(thisEntity);
 		    txn.commit();
 		} finally {
 		    if (txn.isActive()) {
@@ -311,13 +337,14 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 	
 	public void setWager(long wagr){
 		this.wager=wagr;
+
+		thisEntity.setProperty("wager", this.wager);
+
 	}
 	
 	public String getGladiatorChallengeKey(){
-		return this.gladiatorChallengeKey.toString();
+		return thisEntity.getKey().toString();
 	}
-
-	
 	
 
 }

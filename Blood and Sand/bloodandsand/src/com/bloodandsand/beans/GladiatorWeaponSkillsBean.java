@@ -6,8 +6,12 @@ package com.bloodandsand.beans;
 import java.util.logging.Logger;
 
 import com.bloodandsand.utilities.CoreBean;
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.EmbeddedEntity;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.Query;
 /**
  * @author dewie
  * Feb 20 2013
@@ -31,6 +35,7 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 	private long maul;	
 	private long handToHand;
 	
+	private EmbeddedEntity thisEntity = new EmbeddedEntity();	
 	
 	
 	public GladiatorWeaponSkillsBean(){ //standard constructor used for creating new gladiators
@@ -40,46 +45,49 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 		greataxe  = 0;
 		spear  = 0;
 		quarterstaff  = 0;
-		maul  = 0;		
+		maul  = 0;	
+		setUpEntity();
 	}
-	
-	public GladiatorWeaponSkillsBean( Entity skills){
-		this.setSword((Long)(skills.getProperty("sword")));
-		this.setDaggers((Long)(skills.getProperty("daggers")));
-		this.setGreatsword((Long)(skills.getProperty("greatsword")));
-		this.setGreataxe((Long)(skills.getProperty("greataxe")));
-		this.setSpear((Long)(skills.getProperty("spear")));
-		this.setQuarterstaff((Long)(skills.getProperty("quarterstaff")));
-		this.setMaul((Long)(skills.getProperty("maul")));
-		this.setHandToHand((Long)skills.getProperty("handToHand"));
-	}
-	
-	
-
-	public Entity createWeaponSkillsEntity(Key gladKey){
-		Entity weaponSkills = new Entity(weaponSkillsKind, gladKey); //link the weapon skills entity to its owner gladiator
-		weaponSkills.setProperty("sword", sword);
-		weaponSkills.setProperty("daggers", daggers);
-		weaponSkills.setProperty("greatsword", greatsword);
-		weaponSkills.setProperty("greataxe", greataxe);
-		weaponSkills.setProperty("spear", spear);
-		weaponSkills.setProperty("quarterstaff", quarterstaff);					
-		weaponSkills.setProperty("maul", maul); 
-		weaponSkills.setProperty("handToHand", handToHand);
 		
-		return weaponSkills;
+	public GladiatorWeaponSkillsBean( EmbeddedEntity embeddedEntity){
+		thisEntity = embeddedEntity;
+		this.sword = (Long)(embeddedEntity.getProperty("sword"));
+		this.daggers = (Long)(embeddedEntity.getProperty("daggers"));
+		this.greatsword = (Long)(embeddedEntity.getProperty("greatsword"));
+		this.greataxe = (Long)(embeddedEntity.getProperty("greataxe"));
+		this.spear = (Long)(embeddedEntity.getProperty("spear"));
+		this.quarterstaff = (Long)(embeddedEntity.getProperty("quarterstaff"));
+		this.maul = (Long)(embeddedEntity.getProperty("maul"));
+		this.handToHand = (Long)embeddedEntity.getProperty("handToHand");
+	}	
+	
+	private void setUpEntity(){
+		thisEntity.setProperty("sword", sword);
+		thisEntity.setProperty("daggers", daggers);
+		thisEntity.setProperty("greatsword", greatsword);
+		thisEntity.setProperty("greataxe", greataxe);
+		thisEntity.setProperty("spear", spear);
+		thisEntity.setProperty("quarterstaff", quarterstaff);					
+		thisEntity.setProperty("maul", maul); 
+		thisEntity.setProperty("handToHand", handToHand);
 	}
 	
+	public EmbeddedEntity getEntity(){
+		return thisEntity;
+	}
+
 	public long getSword() {
 		return sword;
 	}
 
 	public void setSword(long sword) {
 		this.sword = sword;
+		thisEntity.setProperty("sword", sword);		
 	}
 	
 	public void trainSword(){
 		this.sword += TRAINING_INCREMENT_AMOUNT;
+		thisEntity.setProperty("sword", sword);	
 	}
 
 	public long getDaggers() {
@@ -88,10 +96,12 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 
 	public void setDaggers(long daggers) {
 		this.daggers = daggers;
+		thisEntity.setProperty("daggers", daggers);	
 	}
 	
 	public void trainDaggers(){
 		this.daggers += TRAINING_INCREMENT_AMOUNT;
+		thisEntity.setProperty("daggers", daggers);
 	}
 
 	public long getGreatsword() {
@@ -100,10 +110,12 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 
 	public void setGreatsword(long greatsword) {
 		this.greatsword = greatsword;
+		thisEntity.setProperty("greatsword", greatsword);
 	}
 	
 	public void trainGreatsword(){
 		this.greatsword += TRAINING_INCREMENT_AMOUNT;
+		thisEntity.setProperty("greatsword", greatsword);
 	}
 
 	public long getGreataxe() {
@@ -112,10 +124,12 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 
 	public void setGreataxe(long greataxe) {
 		this.greataxe = greataxe;
+		thisEntity.setProperty("greataxe", greataxe);
 	}
 	
 	public void trainGreataxe(){
 		this.greataxe += TRAINING_INCREMENT_AMOUNT;
+		thisEntity.setProperty("greataxe", greataxe);
 	}
 
 	public long getSpear() {
@@ -124,10 +138,12 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 
 	public void setSpear(long spear) {
 		this.spear = spear;
+		thisEntity.setProperty("spear", spear);
 	}
 	
 	public void trainSpear(){
 		this.spear += TRAINING_INCREMENT_AMOUNT;
+		thisEntity.setProperty("spear", spear);
 	}
 
 	public long getQuarterstaff() {
@@ -136,10 +152,12 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 
 	public void setQuarterstaff(long quarterstaff) {
 		this.quarterstaff = quarterstaff;
+		thisEntity.setProperty("quarterstaff", quarterstaff);
 	}
 	
 	public void trainQuarterstaff(){
 		this.quarterstaff += TRAINING_INCREMENT_AMOUNT;
+		thisEntity.setProperty("quarterstaff", quarterstaff);
 	}
 
 	public long getMaul() {
@@ -148,10 +166,12 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 
 	public void setMaul(long maul) {
 		this.maul = maul;
+		thisEntity.setProperty("maul", maul);
 	}
 	
 	public void trainMaul(){
 		this.maul += TRAINING_INCREMENT_AMOUNT;
+		thisEntity.setProperty("maul", maul);
 	}
 
 	public long getHandToHand() {
@@ -160,10 +180,12 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 
 	public void setHandToHand(long handToHand) {
 		this.handToHand = handToHand;
+		thisEntity.setProperty("handToHand", handToHand);
 	}
 	
 	public void trainHandToHand(){
 		this.handToHand += TRAINING_INCREMENT_AMOUNT;
+		thisEntity.setProperty("handToHand", handToHand);
 	}
 
 

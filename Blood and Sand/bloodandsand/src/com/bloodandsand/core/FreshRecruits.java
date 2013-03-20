@@ -41,7 +41,7 @@ public class FreshRecruits  extends BaseServlet {
 
         	for (; count > 0; count --){
         		g.createGladiator();
-        		g.saveGladiator();
+        		g.saveNewGladiator();
         	}       	
         }		
 	}

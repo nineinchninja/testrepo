@@ -33,6 +33,16 @@
 		<url-pattern>/buygladiator</url-pattern>
 	</servlet-mapping>
 	
+	
+	<servlet>
+		<servlet-name>MatchResultsServlet</servlet-name>
+		<servlet-class>com.bloodandsand.core.MatchResultsServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>MatchResultsServlet</servlet-name>
+		<url-pattern>/results</url-pattern>
+	</servlet-mapping>
+	
 	<servlet>
 		<servlet-name>CreateChallengeServlet</servlet-name>
 		<servlet-class>com.bloodandsand.core.CreateChallengeServlet</servlet-class>

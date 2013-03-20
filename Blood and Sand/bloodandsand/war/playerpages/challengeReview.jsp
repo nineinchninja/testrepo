@@ -20,7 +20,7 @@
 	
 	<td><a href="/gladiatortraining" class="navigation-link">Train and manage your gladiators</td>
 	<td><a href="/challenges" class="navigation-link">Arrange fights</a></td>
-	<td>Manage your school</td>
+	<td><a href="/results" class="navigation-link">Recent Results</a></td>
 </tr>
 </table>
 <hr>
@@ -39,11 +39,14 @@
 					<form action="/challenges" method="POST" ><input type="hidden" name="accepted" value="${challenge.gladiatorChallengeKey}"/>
 						<tr><td>${challenge.challenger.name}</td><td>${challenge.incumbant.name}</td><td>${challenge.wager}</td><td>${challenge.status}</td>
 							<c:choose>
-								<c:when test="${challenge.challenger.name != gladiator.name && challenge.status !='ACCEPTED'}">
+								<c:when test="${challenge.challenger.name != gladiator.name && challenge.status !='ACCEPTED' && challenge.status !='DECLINED'}">
 									<td><input type="submit" class="otherbutton" value="Accept"/></td>
 								</c:when>
 								<c:when test="${challenge.status =='ACCEPTED'}">
 									<td>Waiting for tournament</td>
+								</c:when>
+								<c:when test="${challenge.status =='DECLINED'}">
+									<td>N/A</td>
 								</c:when>
 								<c:otherwise>
 									<td>Awaiting Opponent</td>

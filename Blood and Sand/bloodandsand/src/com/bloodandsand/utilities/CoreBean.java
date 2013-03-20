@@ -6,19 +6,20 @@ import com.bloodandsand.beans.GladiatorChallengeBean;
 
 public abstract class CoreBean {
 	//Datastore key related strings
-	protected static String gladiatorGroup = "gladiators";	
-	protected static String gladiatorKindName = "Gladiators";
-	protected static String gladiatorEntity = "Gladiator";
+
+	protected static String gladiatorEntity = "Gladiator";	
+
+	protected static String accountEntity = "UserAccount";
 	
-	protected static String accountGroup = "UserAccounts";
-	protected static String accountKindName = "account";
-	protected static String accountEntity = "account";
+	protected static String ludusEntity = "Ludus";
 	
-	protected static String challengeGroup = "challenges";
-	protected static String challengeKindName = "Challenges";
-	protected static String challengeEntity = "challenge";
+	protected static String challengeEntity = "Challenge";
 	
-	protected static String weaponSkillsKind = "WeaponSkills";
+	protected static String matchResultEntity = "MatchResult";
+	
+	protected static String weaponSkillsEntity = "WeaponSkills";
+	
+	protected static String tournamentEntity = "Tournament";
 	
 	
 	protected static int BASE_NUMBER_OF_RECRUITS = 25;//used to limit the query for the market place
@@ -33,5 +34,8 @@ public abstract class CoreBean {
 	protected static String[] WEAPONSKILLS = {"sword", "daggers", "greataxe", "greatsword", "maul", "spear", "hand to hand", "quarterstaff", };
 	
 	public enum Status {INITIATED, ACCEPTED, DECLINED, EXPIRED, CANCELED};	
+	
+	protected int tournamentFrequency = 48 ;
+	protected static int MAX_TOURNAMENTS = 5; //limit for query on existing tournaments
 
 }

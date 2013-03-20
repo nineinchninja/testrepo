@@ -19,7 +19,7 @@
 <td><a href="/gladiatormarket" class="navigation-link">Buy new gladiators</a></td>
 <td><a href="/gladiatortraining" class="navigation-link">Train and manage your gladiators</td>
 <td><a href="/challenges" class="navigation-link">Arrange fights</a></td>
-<td>Manage your school</td>
+<td><a href="/results" class="navigation-link">Recent Results</a></td>
 </tr>
 </table>
 <hr>

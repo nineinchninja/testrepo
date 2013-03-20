@@ -14,6 +14,7 @@ import com.bloodandsand.utilities.CoreBean;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.EmbeddedEntity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
@@ -67,8 +68,11 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public long price;	
 	private String status;	
-	private GladiatorWeaponSkillsBean weaponSkills;	
+		
 	public String owner; 
+	
+	private Entity thisEntity = new Entity(gladiatorEntity);
+	private GladiatorWeaponSkillsBean weaponSkills = new GladiatorWeaponSkillsBean();
 	
 	public Key key;
 	
@@ -80,190 +84,153 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	}
 	
 	public GladiatorDataBean(Entity g) {
-		this.setDataStoreKey(g.getKey());
-		this.setStrength((Long)(g.getProperty("strength")));
-		this.setAgility((Long)(g.getProperty("agility")));
-		this.setSpeed((Long)(g.getProperty("speed")));
-		this.setIntelligence((Long)(g.getProperty("intelligence")));
-		this.setConstitution((Long)(g.getProperty("constitution")));
-		this.setBloodlust((Long)(g.getProperty("bloodlust")));
-		this.setAggression((Long)(g.getProperty("aggression")));
-		this.setHeat((Long)(g.getProperty("chattiness")));
-		this.setConsistency((Long)(g.getProperty("consistency")));
-		this.setWillpower((Long)(g.getProperty("willpower")));
-		this.setWins((Long)(g.getProperty("wins")));
-		this.setLosses((Long)(g.getProperty("losses")));
-		this.setTies((Long)(g.getProperty("ties")));
-		this.setMatches((Long)g.getProperty("matches"));
-		this.setPopularity((Long)(g.getProperty("popularity")));
-		this.setPrice((Long)(g.getProperty("price")));
 		
-		this.setStatus((String)(g.getProperty("status")));
-		
-		
-		this.weaponSkills = findGladiatorWeaponSkills(g);
-		
-		this.setCurrentTrainingFocus((String)(g.getProperty("currentTrainingFocus")));
-		this.setLastTrainingChangeDate((Date)(g.getProperty("lastTrainingChangeDate")));
-		this.setTrainingHistory((String)(g.getProperty("trainingHistory")));
-		
-		this.setOwner((String)g.getProperty("owner")); 
-		this.setGender((String)g.getProperty("gender"));
-		this.setName((String)g.getProperty("name"));		
+		thisEntity = g;
+		setUpBean();		
 	}
 	
-	private GladiatorWeaponSkillsBean findGladiatorWeaponSkills(Entity g) {
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();		
-		Key gladKey = g.getKey();
+	private void setUpBean(){
+		this.setDataStoreKey(thisEntity.getKey());
+		this.setStrength((Long)(thisEntity.getProperty("strength")));
+		this.setAgility((Long)(thisEntity.getProperty("agility")));
+		this.setSpeed((Long)(thisEntity.getProperty("speed")));
+		this.setIntelligence((Long)(thisEntity.getProperty("intelligence")));
+		this.setConstitution((Long)(thisEntity.getProperty("constitution")));
+		this.setBloodlust((Long)(thisEntity.getProperty("bloodlust")));
+		this.setAggression((Long)(thisEntity.getProperty("aggression")));
+		this.setHeat((Long)(thisEntity.getProperty("chattiness")));
+		this.setConsistency((Long)(thisEntity.getProperty("consistency")));
+		this.setWillpower((Long)(thisEntity.getProperty("willpower")));
+		this.setWins((Long)(thisEntity.getProperty("wins")));
+		this.setLosses((Long)(thisEntity.getProperty("losses")));
+		this.setTies((Long)(thisEntity.getProperty("ties")));
+		this.setMatches((Long)thisEntity.getProperty("matches"));
+		this.setPopularity((Long)(thisEntity.getProperty("popularity")));
+		this.setPrice((Long)(thisEntity.getProperty("price")));
 		
-		Query weaponSkillQuery = new Query(weaponSkillsKind).setAncestor(gladKey);
+		this.setStatus((String)(thisEntity.getProperty("status")));		
 		
-		GladiatorWeaponSkillsBean x = new GladiatorWeaponSkillsBean( datastore.prepare(weaponSkillQuery).asSingleEntity());	
-		return x;
-	}
+		this.setCurrentTrainingFocus((String)(thisEntity.getProperty("currentTrainingFocus")));
+		this.setLastTrainingChangeDate((Date)(thisEntity.getProperty("lastTrainingChangeDate")));
+		this.setTrainingHistory((String)(thisEntity.getProperty("trainingHistory")));
+		
+		this.setOwner((String)thisEntity.getProperty("owner")); 
+		this.setGender((String)thisEntity.getProperty("gender"));
+		this.setName((String)thisEntity.getProperty("name"));
+		
+		this.weaponSkills = new GladiatorWeaponSkillsBean ((EmbeddedEntity) thisEntity.getProperty("weaponSkills"));
+	}			
 	
-	private Entity findGladiatorWeaponSkills(Key keyIn) {
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();		
-		Query weaponSkillQuery = new Query(weaponSkillsKind).setAncestor(keyIn);
-		
-		return datastore.prepare(weaponSkillQuery).asSingleEntity();	
-	}
-
-	public void setDataStoreKey(Key key2) {
-		// TODO Auto-generated method stub
-		this.key = key2;
-	}
-	
-	public GladiatorWeaponSkillsBean getWeaponSkills(){
-		return this.weaponSkills;
-	}
-
 	public void createGladiator(){
+		thisEntity = new Entity(gladiatorEntity);
 		Boolean sanityCheck = false;
 		Random r = new Random();
 		while (!sanityCheck){//included in a while loop to avoid gladiators with too extreme stats	
-			strength = r.nextInt(19) + 10;
-			agility = r.nextInt(19) + 10;
-			speed = r.nextInt(19) + 10;
-			intelligence = r.nextInt(19) + 10;
-			constitution = r.nextInt(19) + 10;
-			willpower = r.nextInt(19) + 10;
+			setStrength(r.nextInt(19) + 10);
+			setAgility(r.nextInt(19) + 10);
+			setSpeed(r.nextInt(19) + 10);
+			setIntelligence(r.nextInt(19) + 10);
+			setConstitution(r.nextInt(19) + 10);
+			setWillpower (r.nextInt(19) + 10);
 			long i = strength + agility + speed + intelligence + constitution + willpower;
 			if (i >= 70 && i <= 100){
 				sanityCheck = true;
 			}
 		}		
-		bloodlust = r.nextInt(10) - 6; 
-		aggression = r.nextInt(10) - 6; 
-		heat = r.nextInt(10) - 6; 						
-		consistency = r.nextInt(10) - 6;	
+		setBloodlust(r.nextInt(10) - 6); 
+		setAggression(r.nextInt(10) - 6); 
+		setHeat(r.nextInt(10) - 6); 						
+		setConsistency(r.nextInt(10) - 6);	
 
 		weaponSkills = new GladiatorWeaponSkillsBean();//creates a new bean with all weapon skills at 0
 		
-		currentTrainingFocus = "None"; //training record information
-		trainingHistory = "";
-		lastTrainingChangeDate = new Date();
-		wins = 0;
-		losses = 0;
-		ties = 0;
-		matches = 0;
-		popularity = 50;
-		name = null;
-		gender = setGender();
+		setCurrentTrainingFocus("None"); //training record information
+		setTrainingHistory("");
+		setLastTrainingChangeDate(new Date());
+		setWins(0);
+		setLosses(0);
+		setTies(0);
+		setMatches (0);
+		setPopularity(50);
+		setName(null);
+		setGender(setGender());
 		
-		status = "FIT";
-		owner = null;
+		setStatus("FIT");
+		setOwner(null);
 		setPrice();
 	}
 	
-	public void saveGladiator() {//this is for saving a new gladiator
-		Key gladiatorKey = KeyFactory.createKey("Gladiators", gladiatorGroup);
-		Entity newGladiator = new Entity("Gladiator", gladiatorKey);
-		Entity newWeaponSkills = weaponSkills.createWeaponSkillsEntity(newGladiator.getKey());
+	public void saveNewGladiator() {//this is for saving a new gladiator		
+		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		
-		setUpGladiatorEntity(newGladiator, newWeaponSkills);
+		setUpGladiatorEntity();
 		Transaction txn = datastore.beginTransaction();
 		try {
 			
-			datastore.put(newGladiator);
+			datastore.put(thisEntity);	
 			
-			datastore.put(newWeaponSkills);
 			txn.commit();
 		} finally {	
 		    if (txn.isActive()) {
 		        txn.rollback();
 		        log.warning("Save New Gladiator transaction failed: rolled back");
 		    }
-		}	
+		}		
 	}
 	
-	private void setUpGladiatorEntity(Entity newGladiator, Entity newWeaponSkills){
-		newGladiator.setProperty("strength", strength);
-		newGladiator.setProperty("agility", agility);
-		newGladiator.setProperty("speed", speed);
-		newGladiator.setProperty("intelligence", intelligence);
-		newGladiator.setProperty("constitution", constitution);
-		newGladiator.setProperty("willpower", willpower);			
+	private void setUpGladiatorEntity(){
+		//one stop shop for saving gladiator entities, ensures consistency
 		
-		newGladiator.setProperty("bloodlust", bloodlust); 
-		newGladiator.setProperty("aggression", aggression); 
-		newGladiator.setProperty("chattiness", heat); 							
-		newGladiator.setProperty("consistency", consistency);
+		thisEntity.setProperty("strength", strength);
+		thisEntity.setProperty("agility", agility);
+		thisEntity.setProperty("speed", speed);
+		thisEntity.setProperty("intelligence", intelligence);
+		thisEntity.setProperty("constitution", constitution);
+		thisEntity.setProperty("willpower", willpower);			
 		
-		newGladiator.setProperty("wins", wins);
-		newGladiator.setProperty("losses", losses);
-		newGladiator.setProperty("ties", ties);
-		newGladiator.setProperty("matches", matches);
-		newGladiator.setProperty("popularity", popularity);
+		thisEntity.setProperty("bloodlust", bloodlust); 
+		thisEntity.setProperty("aggression", aggression); 
+		thisEntity.setProperty("chattiness", heat); 							
+		thisEntity.setProperty("consistency", consistency);
 		
-		newGladiator.setProperty("price", price);
+		thisEntity.setProperty("wins", wins);
+		thisEntity.setProperty("losses", losses);
+		thisEntity.setProperty("ties", ties);
+		thisEntity.setProperty("matches", matches);
+		thisEntity.setProperty("popularity", popularity);
 		
-		newGladiator.setProperty("status", status);
+		thisEntity.setProperty("price", price);
+		
+		thisEntity.setProperty("status", status);
 			
-		newGladiator.setProperty("currentTrainingFocus", currentTrainingFocus) ;//training record information
-		newGladiator.setProperty("trainingHistory", trainingHistory);
-		newGladiator.setProperty("lastTrainingChangeDate", lastTrainingChangeDate);			
+		thisEntity.setProperty("currentTrainingFocus", currentTrainingFocus) ;//training record information
+		thisEntity.setProperty("trainingHistory", trainingHistory);
+		thisEntity.setProperty("lastTrainingChangeDate", lastTrainingChangeDate);			
 		
-		newGladiator.setProperty("owner", owner); 
+		thisEntity.setProperty("owner", owner); 
 		
-		newGladiator.setProperty("name", name);
-		newGladiator.setProperty("gender", gender);	
+		thisEntity.setProperty("name", name);
+		thisEntity.setProperty("gender", gender);		
 		
-		newWeaponSkills.setProperty("sword", weaponSkills.getSword());
-		newWeaponSkills.setProperty("daggers", weaponSkills.getDaggers());
-		newWeaponSkills.setProperty("greatsword", weaponSkills.getGreatsword());
-		newWeaponSkills.setProperty("greataxe", weaponSkills.getGreataxe());
-		newWeaponSkills.setProperty("spear", weaponSkills.getSpear());
-		newWeaponSkills.setProperty("quarterstaff", weaponSkills.getQuarterstaff());					
-		newWeaponSkills.setProperty("maul", weaponSkills.getMaul()); 
-		newWeaponSkills.setProperty("handToHand", weaponSkills.getHandToHand());
+		thisEntity.setProperty("weaponSkills", weaponSkills.getEntity());
+		
 	}
 	
-	public void saveGladiator(String keyIn) {//updating an existing gladiator after making some changes
+	public void saveGladiator() {//updating an existing gladiator after making some changes
 
-		Key gladiatorKey = KeyFactory.stringToKey(keyIn); //which looks the gladiator up in the ds and updates it		
+		//Key gladiatorKey = KeyFactory.stringToKey(keyIn); //which looks the gladiator up in the ds and updates it		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Entity newGladiator;
-		Entity newWeaponSkills;
-		try {
-			newWeaponSkills  = findGladiatorWeaponSkills(gladiatorKey);
-			newGladiator = datastore.get(gladiatorKey);
-		} catch (EntityNotFoundException e) {
-			log.info("GladiatorDataBean.java: Didn't find the gladiator when using key search");
-			e.printStackTrace();
-			return;
-		}
+//		
 		
-		if (newWeaponSkills == null){
+		if (weaponSkills == null){
 			log.info("No weaponskill entity found");
 		}
-		setUpGladiatorEntity(newGladiator, newWeaponSkills);
+		setUpGladiatorEntity();
 		Transaction txn = datastore.beginTransaction();
 		
 		try {	
-			datastore.put(newGladiator);	
-			datastore.put(newWeaponSkills);
+			datastore.put(thisEntity);				
 			txn.commit();
 		} finally {	
 		    if (txn.isActive()) {
@@ -273,11 +240,11 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		}	
 	}
 
-	public Entity findGladiatorEntityByKey(Key challengerKey){
+	public Entity findGladiatorEntityByKey(Key gladKey){
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Query q = new Query(gladiatorEntity);
 
-        q.setFilter(new FilterPredicate (Entity.KEY_RESERVED_PROPERTY, FilterOperator.EQUAL, challengerKey));
+        q.setFilter(new FilterPredicate (Entity.KEY_RESERVED_PROPERTY, FilterOperator.EQUAL, gladKey));
         Entity results = datastore.prepare(q).asSingleEntity();        
         return results;
 	}	
@@ -304,8 +271,8 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 			//queries are limited in their filters, so I filtered based on the status manually
 			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 			Query q = new Query(challengeEntity);
-			Filter challngr = new FilterPredicate("challengerKey", FilterOperator.EQUAL, this.getKey());
-			Filter incumb = new FilterPredicate("incumbantKey", FilterOperator.EQUAL, this.getKey());
+			Filter challngr = new FilterPredicate("challengerKey", FilterOperator.EQUAL, thisEntity.getKey());
+			Filter incumb = new FilterPredicate("incumbantKey", FilterOperator.EQUAL, thisEntity.getKey());
 			Filter currentChallenges = CompositeFilterOperator.or(incumb, challngr); //inactive);
 			q.setFilter(currentChallenges);
 			FetchOptions max_number_challenges =
@@ -316,28 +283,30 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 				List<GladiatorChallengeBean> challs = new ArrayList<GladiatorChallengeBean>();
 				for (Entity ent : results){
 					GladiatorChallengeBean nxt = new GladiatorChallengeBean(ent, false);
-					//add the gladiators to the challenge without creating a loop
-					if (this.getKey().equals(nxt.getChallengerKey())){
-						nxt.setChallenger(this);
-						nxt.findIncumbant();
-					} else {
-						if (this.getKey().equals(nxt.getIncumbantKey())){
-							nxt.setIncumbant(this);
-							nxt.findChallenger();
+					if (nxt.getStatusEnum() == Status.ACCEPTED || nxt.getStatusEnum() == Status.INITIATED || nxt.getStatusEnum() == Status.DECLINED && nxt != null){
+						//add the gladiators to the challenge without creating a loop					
+						if (this.getKey().equals(nxt.getChallengerKey())){
+							nxt.setChallenger(this);
+							nxt.findIncumbant();
 						} else {
-							log.info("No match on keys");
+							if (this.getKey().equals(nxt.getIncumbantKey())){
+								nxt.setIncumbant(this);
+								nxt.findChallenger();
+							} else {
+								log.info("No match on keys");
+							}							
 						}
-					}
-					if (nxt.getStatusEnum() != Status.EXPIRED && nxt.getStatusEnum() != Status.CANCELED && nxt != null){
 						challs.add(nxt);
 						log.info("added challenge to " + this.name);
-					}				
+					}											
 				}
-				this.challenges = challs;
-			}
-						
-		}
-		
+				if (challs.size() > 0){
+					this.challenges = challs;
+				}
+				
+				log.info("Added a total of " + challs.size() + " to " + name);
+			}						
+		}		
 	}
 	
 	public boolean isGladiatorAvailableToChallenge(){
@@ -349,7 +318,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 			return false;
 		}
 		
-		if (this.name.equalsIgnoreCase("none")){
+		if (this.name == null || this.name.equalsIgnoreCase("none")){
 			log.info("Gladiator has no name");
 			return false;
 		}
@@ -362,8 +331,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 					log.info("Gladiator has accepted a challenge");
 				}
 			}
-		}
-				
+		}				
 		return avail;
 	}
 	
@@ -371,7 +339,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		List<GladiatorDataBean> gladiators = new ArrayList<GladiatorDataBean>(); 
 		
-		Query q = new Query("Gladiator");
+		Query q = new Query(gladiatorEntity);
 		
         Filter owned = new FilterPredicate("owner", FilterOperator.NOT_EQUAL, null);
         Filter alive = new FilterPredicate("status", FilterOperator.EQUAL, "FIT");
@@ -399,7 +367,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	public List<GladiatorDataBean> getGladiatorsOnSale(){//used in the gladiator market
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		List<GladiatorDataBean> gladiators = new ArrayList<GladiatorDataBean>(); 
-		Query q = new Query("Gladiator");
+		Query q = new Query(gladiatorEntity);
 		
         Filter unowned = new FilterPredicate("owner", FilterOperator.EQUAL, null);
         Filter alive = new FilterPredicate("status", FilterOperator.EQUAL, "FIT");
@@ -441,8 +409,10 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setNewTraining(String training){
 		this.trainingHistory.concat("/n " + this.currentTrainingFocus);
-		this.currentTrainingFocus = training;
-		this.lastTrainingChangeDate = new Date();
+		setCurrentTrainingFocus(training);
+		setLastTrainingChangeDate(new Date());
+		
+		thisEntity.setProperty("trainingHistory", trainingHistory);		
 	}	
 
 	public void setKey(String key) {
@@ -451,18 +421,24 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public String getKey(){
 		if (this.key != null){
-			return KeyFactory.keyToString(this.key);
+			return KeyFactory.keyToString(thisEntity.getKey());
 		} else {
 			return null;
 		}
 	}
 	
+	public void setDataStoreKey(Key key2) {
+		// TODO Auto-generated method stub
+		this.key = key2;
+	}
+	
 	public Key getDataStoreKey(){
-		return this.key;
+		return thisEntity.getKey();
 	}
 
 	public void setStrength (long strength) {		
 		this.strength = strength;		
+		thisEntity.setProperty("strength", strength);
 	}
 	
 	public long getStrength () {		
@@ -471,6 +447,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setAgility (long agility) {
 		this.agility = agility;
+		thisEntity.setProperty("agility", agility);
 	}
 	
 	public long getAgility () {		
@@ -479,6 +456,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setSpeed (long speed) {
 		this.speed = speed;
+		thisEntity.setProperty("speed", speed);
 	}
 	
 	public long getSpeed () {		
@@ -487,6 +465,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setIntelligence (long intelligence) {
 		this.intelligence = intelligence;
+		thisEntity.setProperty("intelligence", intelligence);
 	}
 	
 	public long getIntelligence () {		
@@ -495,6 +474,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setConstitution (long constitution ) {
 		this.constitution = constitution;
+		thisEntity.setProperty("constitution", constitution);
 	}
 	
 	public long getConstitution () {		
@@ -503,6 +483,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setWillpower (long willpower) {
 		this.willpower = willpower;		
+		thisEntity.setProperty("willpower", willpower);
 	}
 	
 	public long getWillpower () {		
@@ -511,6 +492,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setBloodlust (long bloodlust) {
 		this.bloodlust = bloodlust;
+		thisEntity.setProperty("bloodlust", bloodlust);
 	}
 	
 	public long getBloodlust () {		
@@ -519,6 +501,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setAggression (long aggression) {
 		this.aggression = aggression;
+		thisEntity.setProperty("agression", aggression);
 	}
 	
 	public long getAggression () {		
@@ -527,6 +510,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setHeat (long chattiness) {
 		this.heat = chattiness;
+		thisEntity.setProperty("heat", heat);
 	}
 	
 	public long getHeat () {		
@@ -535,6 +519,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setConsistency (long consistency) {
 		this.consistency = consistency;
+		thisEntity.setProperty("consistency", consistency);
 	}
 	
 	public long getConsistency () {		
@@ -543,6 +528,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setWins (long wins) {
 		this.wins = wins;
+		thisEntity.setProperty("wins", wins);
 	}
 	
 	public long getWins () {		
@@ -551,6 +537,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setLosses (long losses) {
 		this.losses = losses;
+		thisEntity.setProperty("losses", losses);
 	}
 	
 	public long getLosses () {		
@@ -559,6 +546,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setTies(long ties) {
 		this.ties = ties;		
+		thisEntity.setProperty("ties", ties);
 	}
 	
 	public long getTies() {
@@ -566,7 +554,8 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	}
 
 	public void setMatches(long property) {
-		matches = property;		
+		matches = property;	
+		thisEntity.setProperty("matches", matches);
 	}
 	
 	public long getMatches(){
@@ -575,6 +564,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setPopularity (long popularity) {
 		this.popularity = popularity;
+		thisEntity.setProperty("popularity", popularity);
 	}
 	
 	public long getPopularity () {		
@@ -583,11 +573,12 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setPrice (long price) {
 		this.price = price;
+		thisEntity.setProperty("price", price);
 	}
 	
 	public void setPrice(){
 		Random r = new Random();
-		price = (int)((strength + agility + speed + intelligence + constitution + willpower + r.nextInt(25)) / 10);
+		setPrice((int)((strength + agility + speed + intelligence + constitution + willpower + r.nextInt(25)) / 10));		
 	}
 	
 	public long getPrice () {		
@@ -596,6 +587,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setStatus (String status) {
 		this.status = status;
+		thisEntity.setProperty("status", status);
 	}
 	
 	public String getStatus () {		
@@ -604,11 +596,16 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void setOwner (String owner) {
 		this.owner = owner;
+		thisEntity.setProperty("owner", owner);
 	}
 	
 	public String getOwner () {		
 		return owner;		
 	}			
+	
+	public GladiatorWeaponSkillsBean getWeaponSkills(){
+		return this.weaponSkills;
+	}
 	
 	public void setWeaponsSkill (String name, long value) {
 		
@@ -653,6 +650,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 
 	public void setGender(String gender) {
 		this.gender = gender;
+		thisEntity.setProperty("gender", gender);
 		
 	}			
 	public String getGender() {
@@ -671,7 +669,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	public List<GladiatorDataBean> getGladiatorsForTraining(){
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		List<GladiatorDataBean> gladiators = new ArrayList<GladiatorDataBean>(); 
-		Query q = new Query("Gladiator");
+		Query q = new Query(gladiatorEntity);
 		
         //Filter owned = new FilterPredicate("owner", FilterOperator.NOT_EQUAL, null);//only train those who are owned by a player
         Filter alive = new FilterPredicate("status", FilterOperator.EQUAL, "FIT"); //those injured or dead cannot train
@@ -782,7 +780,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		if (currentTrainingFocus.equalsIgnoreCase("HandToHand")){
 			weaponSkills.trainHandToHand();
 		}
-		saveGladiator(getKey());
+		saveGladiator();
 	}
 
 	private long getTrainingAttribute() {
@@ -814,6 +812,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 
 	public void setCurrentTrainingFocus(String currentTrainingFocus) {
 		this.currentTrainingFocus = currentTrainingFocus;
+		thisEntity.setProperty("currentTrainingFocus", currentTrainingFocus);
 	}
 
 	public Date getLastTrainingChangeDate() {
@@ -822,6 +821,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 
 	public void setLastTrainingChangeDate(Date lastTrainingChangeDate) {
 		this.lastTrainingChangeDate = lastTrainingChangeDate;
+		thisEntity.setProperty("lastTrainingChangeDate", lastTrainingChangeDate);
 	}
 
 	public String getTrainingHistory() {
@@ -830,13 +830,13 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 
 	public void setTrainingHistory(String trainingHistory) {
 		this.trainingHistory = trainingHistory;
+		thisEntity.setProperty("trainingHistory", trainingHistory);
 	}
 
 	public void setName(String name) {
-		if (name == "null"){
-			this.name = "No name selected";
-		}
+		
 		this.name = name;
+		thisEntity.setProperty("name", name);
 	}	
 	
 	public String getName(){
@@ -854,7 +854,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		try {
 			newGladiator = datastore.get(gladiatorKey);
 		} catch (EntityNotFoundException e) {
-			// TODO Auto-generated catch block
+			// 
 			log.info("GladiatorDataBean.java: Didn't find the gladiator when using key search");
 			e.printStackTrace();
 			return;
@@ -883,10 +883,23 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		// add 1 to the wins and total matches
 		wins += 1;
 		matches += 1;
+		thisEntity.setProperty("wins", wins);
+		thisEntity.setProperty("matches", matches);
+		
+	}
+	
+	public void addLoss() {
+		// add 1 to the wins and total matches
+		losses += 1;
+		matches += 1;
+		thisEntity.setProperty("losses", losses);
+		thisEntity.setProperty("matches", matches);		
 	}
 
 	public void addTie() {
 		matches+= 1;
-		ties +=1;		
+		ties +=1;	
+		thisEntity.setProperty("ties", ties);
+		thisEntity.setProperty("matches", matches);
 	}	
 }

@@ -62,7 +62,7 @@ public class BuyGladiator extends BaseServlet{
 				} else {
 						UserDataBean usr = (UserDataBean)req.getSession().getAttribute(userBeanData);
 						if (usr == null){
-							log.info("BuyGladiator.java No user bean available. Purchase was not processed failed");
+							log.info("BuyGladiator.java No user bean available. Purchase was not processed");
 							resp.sendRedirect(loginRedirect);
 						} else {
 								if (usr.ludus.gladiators.size() >= MAX_GLADIATORS_ALLOWED){
@@ -72,7 +72,7 @@ public class BuyGladiator extends BaseServlet{
 									selected.setNewOwner((String)req.getSession().getAttribute("username"), selected.getKey());//with the added key string it is saved to the datastore
 									usr.ludus.addNewGladiator(selected);//update the client so as to show the new gladiator when returning to home page
 									usr.ludus.updateAvailableGold(-(selected.getPrice()), (String)req.getSession().getAttribute("username"));
-									req.getSession().setAttribute("UserData", usr);
+									req.getSession().setAttribute(userBeanData, usr);
 									req.getSession().setAttribute(userDataRefresh, System.currentTimeMillis());
 									resp.sendRedirect(loginRedirect);
 								}

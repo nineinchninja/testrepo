@@ -11,54 +11,75 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.logging.Logger;
 
-import org.mortbay.log.Log;
 
-import com.bloodandsand.core.GladiatorCombat;
+import com.bloodandsand.utilities.CoreBean;
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.EntityNotFoundException;
+import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.Transaction;
 import com.google.appengine.labs.repackaged.com.google.common.collect.ArrayTable;
+import com.google.appengine.api.datastore.Text;
 
-public class MatchResultBean implements java.io.Serializable {
+public class MatchResultBean extends CoreBean implements java.io.Serializable {
 	/**
 	 * 
 	 */
 	protected static final Logger log = Logger.getLogger(MatchResultBean.class.getName());
 	
 	private static final long serialVersionUID = 5687618169542410632L;
-	public GladiatorDataBean challenger;
-	public GladiatorDataBean incumbant;
+	private GladiatorDataBean challenger;
+	private GladiatorDataBean incumbant;
 	
-	public String incumbantName;
-	public String challengerName;
-	public String challengerPossessive;
-	public String incumbantPossessive;
+	private String winner;
 	
-	public Date matchDate;
+	private String incumbantName;
+	private String challengerName;
+	private Key incumbantKey;
+	private Key challengerKey;
+	private String challengerPossessive;
+	private String incumbantPossessive;
 	
-	public String challengerAction;
-	public String incumbantAction;
+	private Date matchDate;
 	
-	public String challengerRiposte;
-	public String incumbantRiposte;
+	private String challengerAction;
+	private String incumbantAction;
 	
-	public String challengerResult;
-	public String incumbantResult;
+	private String challengerRiposte;
+	private String incumbantRiposte;
 	
-	public String challengerLocation;
-	public String challengerDamage;
-	public String incumbantLocation;
-	public String incumbantDamage;
+	private String challengerResult;
+	private String incumbantResult;
 	
-	public String challengerState;
-	public String incumbantState;
+	private String challengerLocation;
+	private String challengerDamage;
+	private String incumbantLocation;
+	private String incumbantDamage;
+	
+	private String challengerState;
+	private String incumbantState;
 		
-	private int round;
-	public String roundDescription;
-	public ArrayList<String> roundsDetails;//contains a simple string with all details for each round that can be parsed later if I want to get additional details
+	private long round;
+	private String roundDescription;
+	private ArrayList<String> roundsDetails;//contains a simple string with all details for each round that can be parsed later if I want to get additional details
 	private String fightDescription;
 	
+	private Entity thisEntity = new Entity(matchResultEntity);
+	
+	public MatchResultBean(Entity e){
+		thisEntity = e;
+		setUpBean();
+		
+	}
 	
 	public MatchResultBean (GladiatorDataBean challenger, GladiatorDataBean incumbant){
+		
 		this.challenger = challenger;
 		this.incumbant = incumbant;
+		
+		this.challengerKey = challenger.getDataStoreKey();
+		this.incumbantKey = incumbant.getDataStoreKey();
 		
 		this.challengerName = challenger.getName();
 		this.incumbantName = incumbant.getName();
@@ -82,14 +103,247 @@ public class MatchResultBean implements java.io.Serializable {
 		challengerState = "";
 		incumbantState = "";		
 		
-		Date matchDate = new Date();
+		matchDate = new Date();
 		
 		round = 0;		
+		winner = "";
+		setUpEntity();
 	}
 	
+	private void setUpBean(){
+		challengerKey = (Key) this.thisEntity.getProperty("challengerKey");
+		incumbantKey = (Key) this.thisEntity.getProperty("incumbantKey");
+		challengerName = (String) this.thisEntity.getProperty("challengerName");
+		incumbantName = (String) this.thisEntity.getProperty("incumbantName");
+		matchDate = (Date) this.thisEntity.getProperty("matchDate");
+		fightDescription = ((Text) this.thisEntity.getProperty("fightDescription")).getValue();
+		round = (Long) this.thisEntity.getProperty("totalRounds");	
+		winner = (String) this.thisEntity.getProperty("winner");
+	}
+	
+	private void setUpEntity(){
+		//ensure all properties are set up
+		
+		this.thisEntity.setProperty("challengerKey", challengerKey);
+		this.thisEntity.setProperty("incumbantKey", incumbantKey);
+		this.thisEntity.setProperty("challengerName", challengerName);
+		this.thisEntity.setProperty("incumbantName", incumbantName);
+		this.thisEntity.setProperty("matchDate", matchDate);
+		this.thisEntity.setProperty("fightDescription", new Text(fightDescription));
+		this.thisEntity.setProperty("totalRounds", round);	
+		this.thisEntity.setProperty("winner", winner);
+	}
+	
+	public GladiatorDataBean getChallenger() {
+		return challenger;
+	}
+
+	public void setChallenger(GladiatorDataBean challenger) {
+		this.challenger = challenger;
+	}
+
+	public GladiatorDataBean getIncumbant() {
+		return incumbant;
+	}
+
+	public void setIncumbant(GladiatorDataBean incumbant) {
+		this.incumbant = incumbant;
+	}
+
+	public String getIncumbantName() {
+		return incumbantName;
+	}
+
+	public void setIncumbantName(String incumbantName) {
+		this.incumbantName = incumbantName;
+		thisEntity.setProperty("incumbantName", incumbantName);
+	}
+
+	public String getChallengerName() {
+		return challengerName;
+	}
+
+	public void setChallengerName(String challengerName) {
+		this.challengerName = challengerName;
+		thisEntity.setProperty("challengerName", challengerName);
+	}
+
+	public Key getIncumbantKey() {
+		return incumbantKey;
+	}
+
+	public void setIncumbantKey(Key incumbantKey) {
+		this.incumbantKey = incumbantKey;
+		thisEntity.setProperty("incumbantKey", incumbantKey);
+	}
+
+	public Key getChallengerKey() {
+		return challengerKey;
+	}
+
+	public void setChallengerKey(Key challengerKey) {
+		this.challengerKey = challengerKey;
+		thisEntity.setProperty("challengerKey", challengerKey);
+	}
+
+	public String getChallengerPossessive() {
+		return challengerPossessive;
+	}
+
+	public void setChallengerPossessive(String challengerPossessive) {
+		this.challengerPossessive = challengerPossessive;
+	}
+
+	public String getIncumbantPossessive() {
+		return incumbantPossessive;
+	}
+
+	public void setIncumbantPossessive(String incumbantPossessive) {
+		this.incumbantPossessive = incumbantPossessive;
+	}
+
+	public Date getMatchDate() {
+		return matchDate;
+	}
+
+	public void setMatchDate(Date matchDate) {
+		this.matchDate = matchDate;
+		thisEntity.setProperty("matchDate", matchDate);
+	}
+
+	public String getChallengerAction() {
+		return challengerAction;
+	}
+
+	public void setChallengerAction(String challengerAction) {
+		this.challengerAction = challengerAction;
+	}
+
+	public String getIncumbantAction() {
+		return incumbantAction;
+	}
+
+	public void setIncumbantAction(String incumbantAction) {
+		this.incumbantAction = incumbantAction;
+	}
+
+	public String getChallengerRiposte() {
+		return challengerRiposte;
+	}
+
+	public void setChallengerRiposte(String challengerRiposte) {
+		this.challengerRiposte = challengerRiposte;
+	}
+
+	public String getIncumbantRiposte() {
+		return incumbantRiposte;
+	}
+
+	public void setIncumbantRiposte(String incumbantRiposte) {
+		this.incumbantRiposte = incumbantRiposte;
+	}
+
+	public String getChallengerResult() {
+		return challengerResult;
+	}
+
+	public void setChallengerResult(String challengerResult) {
+		this.challengerResult = challengerResult;
+	}
+
+	public String getIncumbantResult() {
+		return incumbantResult;
+	}
+
+	public void setIncumbantResult(String incumbantResult) {
+		this.incumbantResult = incumbantResult;
+	}
+
+	public String getChallengerLocation() {
+		return challengerLocation;
+	}
+
+	public void setChallengerLocation(String challengerLocation) {
+		this.challengerLocation = challengerLocation;
+	}
+
+	public String getChallengerDamage() {
+		return challengerDamage;
+	}
+
+	public void setChallengerDamage(String challengerDamage) {
+		this.challengerDamage = challengerDamage;
+	}
+
+	public String getIncumbantLocation() {
+		return incumbantLocation;
+	}
+
+	public void setIncumbantLocation(String incumbantLocation) {
+		this.incumbantLocation = incumbantLocation;
+	}
+
+	public String getIncumbantDamage() {
+		return incumbantDamage;
+	}
+
+	public void setIncumbantDamage(String incumbantDamage) {
+		this.incumbantDamage = incumbantDamage;
+	}
+
+	public String getChallengerState() {
+		return challengerState;
+	}
+
+	public void setChallengerState(String challengerState) {
+		this.challengerState = challengerState;
+	}
+
+	public String getIncumbantState() {
+		return incumbantState;
+	}
+
+	public void setIncumbantState(String incumbantState) {
+		this.incumbantState = incumbantState;
+	}
+
+	public long getRound() {
+		return round;
+	}
+
+	public void setRound(long round) {
+		this.round = round;
+		thisEntity.setProperty("totalRounds", round);
+	}
+
+	public String getRoundDescription() {
+		return roundDescription;
+	}
+
+	public void setRoundDescription(String roundDescription) {
+		this.roundDescription = roundDescription;
+	}
+
+	public ArrayList<String> getRoundsDetails() {
+		return roundsDetails;
+	}
+
+	public void setRoundsDetails(ArrayList<String> roundsDetails) {
+		this.roundsDetails = roundsDetails;
+	}
+
+	public String getFightDescription() {
+		return fightDescription;
+	}
+
+	public void setFightDescription(String fightDescription) {
+		this.fightDescription = fightDescription;
+		thisEntity.setProperty("fightDescription", new Text(fightDescription));
+	}
+
 	public void initializeNewRound (int round){
 		this.round = round;
-		roundDescription = "";
+		setRoundDescription ("");
 		
 		challengerAction = "";
 		incumbantAction = "";
@@ -188,7 +442,7 @@ public class MatchResultBean implements java.io.Serializable {
 			
 		roundDescription += "\n";
 		
-		roundsDetails.add(round, "ChallengerAction:"+ challengerAction + "::" +
+		roundsDetails.add((int) round, "ChallengerAction:"+ challengerAction + "::" +
 								"IncumbantAction:" + incumbantAction + "::" +
 								"ChallengerRiposte:" + challengerRiposte + "::" +
 								"IncumbantRiposte:" + incumbantRiposte + "::" +
@@ -205,6 +459,7 @@ public class MatchResultBean implements java.io.Serializable {
 				"ChallengerState:" + challengerState + "::" +
 				"IncumbantState:" + incumbantState);
 		fightDescription += roundDescription;
+		setUpEntity();
 		return roundDescription; //this is a hack to get things moving. It should be revamped for formatting etc
 	}
 	
@@ -217,6 +472,7 @@ public class MatchResultBean implements java.io.Serializable {
 	private String getResult(GladiatorDataBean glad,
 			String action, String riposte, String outcome,
 			String location, String damage) {
+		
 		String name = glad.name;
 		String poss = glad.getPossessive();
 		String roundAction = "";
@@ -338,6 +594,36 @@ public class MatchResultBean implements java.io.Serializable {
 			}
 		}
 		
+	}
+
+	public void saveNewResults(TournamentDataBean tourney) {
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();	
+		thisEntity = new Entity(matchResultEntity, tourney.getDataStoreKey());
+		
+		setUpEntity();
+		
+		Transaction txn = datastore.beginTransaction();
+
+		try {			
+			datastore.put(thisEntity);
+			txn.commit();
+		} finally  {
+			if (txn.isActive()) {
+		        txn.rollback();
+		        log.warning("Save match result transaction failed: rolled back");
+		    }
+		}
+		
+	}
+
+	public void setWinner(String winner) {
+		this.winner = winner;
+		thisEntity.setProperty("winner", winner);
+		
+	}
+	
+	public String getWinner(){
+		return this.winner;
 	}
 	
 

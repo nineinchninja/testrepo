@@ -7,14 +7,11 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 <link href="/stylesheets/main.css" type="text/css" rel="stylesheet" />
-<title>Challenge Another Gladiator</title>
+<title>Recent Results</title>
 </head>
 <body>
-
-
-<!-- navigation bar -->
 <a href="/logout" class="login-link">logout</a>
-<span class="main-title">Challenge a Gladiator</span>
+<span class="main-title">Recent Tournament Results</span>
 <hr>
 <table class="table-navigation">
 <tr>
@@ -26,50 +23,23 @@
 </tr>
 </table>
 <hr>
-
-<form method="post" action="/createChallenge" id="challengeform">
-<table >
-<tr><td>
-
-	<h3>Select your gladiator</h3>
-
-
-<select name="challenger" autofocus="autofocus" size="5" class="smallselect" required="required">
-	<c:forEach var="gladiator" items="${MyChallengers}">
-	
-		<option>${gladiator.name} </option>	
-
+<table class="table-results">
+<c:forEach var="tournament" items="${ResultsBeanData}">
+	<tr>
+		<th class="table-header" colspan="4">Tournament ${tournament.eventDate}</th>
+	</tr>
+	<tr>
+		<th class="table-header">Challenger</th>
+		<th class="table-header">Incumbant</th>
+		<th class="table-header">Number of Rounds</th>
+		<th class="table-header">Outcome</th>	
+	</tr>
+	<c:forEach var="match" items="${tournament.results}">
+		<tr>	
+			<td >${match.challengerName}</td>
+			<td >${match.incumbantName}</td>
+			<td >${match.round}</td>
+			<td >${match.winner}</td>			
+		</tr>
 	</c:forEach>
-</select>
-
-</td>
-<td rowspan="2">
-
-	<h3>Select your opponent</h3>
-
-
-<select name="opponent"  size="20" class="largeselect" required="required">
-	<c:forEach var="gladiator" items="${Opponents}">
-	
-		<option class="largetext">${gladiator.name} </option>	
-
-	</c:forEach>
-</select>
-
-</td>
-<td>
-
-	<h3>Enter a wager (optional)</h3>
-	(coming soon)
-
-	
-
-</td>
-</tr>
-<tr><td></td><td></td><td><div class="basediv">	<input type="submit" class="otherbutton" form="challengeform" value="Send your challenge to your opponent"></div></td>
-</tr>
-<hr>
-</table>
- </form>
-</body>
-</html>
+</c:forEach></table>

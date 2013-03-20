@@ -65,9 +65,8 @@ public class ApplyName extends BaseServlet {
 					if ( newName != null && newName.length() >= 4 && checkValidCharacters(newName) && newName.length() < 14){						
 						log.info("New name passes muster and should be: " + newName);						
 						gbean.setName(newName);
-						gbean.saveGladiator(gbean.getKey());
-						changed = true;
-						
+						gbean.saveGladiator();
+						changed = true;						
 					} else {
 						nameError = "Invalid name. Names should be between 4 and 14 characters and contain no special characters";
 						req.getSession().setAttribute("nameError", nameError);
@@ -76,7 +75,10 @@ public class ApplyName extends BaseServlet {
 				if (changed){	
 					usr.ludus.setGladiators(gladlist);
 					req.getSession().setAttribute(userBeanData, usr);
-					//req.getSession().setAttribute(nameError, "");
+					if (req.getSession().getAttribute("nameError") != null){
+						req.getSession().setAttribute("nameError", "");
+					}
+					
 				}
 				resp.sendRedirect(loggedInRedirect);
 			}

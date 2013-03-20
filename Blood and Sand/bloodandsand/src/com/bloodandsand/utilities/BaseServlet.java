@@ -7,12 +7,25 @@ import javax.servlet.http.*;
 import javax.servlet.*;
 
 import com.bloodandsand.beans.UserDataBean;
+import com.bloodandsand.beans.TournamentDataBean;
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.FetchOptions;
+import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.Filter;
+import com.google.appengine.api.datastore.Query.FilterOperator;
+import com.google.appengine.api.datastore.Query.FilterPredicate;
+import com.google.appengine.api.datastore.Query.SortDirection;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 /**
  * @author Andrew Hayward
  * December 2012
@@ -42,17 +55,24 @@ public class BaseServlet extends HttpServlet {
 	protected static String challengeReviewJsp = "/playerpages/challengeReview.jsp";
 	protected static String challengeCreateJsp = "/playerpages/challengeCreate.jsp";
 	
+	protected static String matchResultsJsp = "/playerpages/matchResults.jsp";
+	
 	protected static String userDataRefresh = "UserRefreshTime";
 	
 	protected static String userBeanData = "UserData";
+	protected static String resultsBeanData = "ResultsBeanData";
 	
 	protected static long USER_DATA_REFRESH_TIME = 600000;
 	
 	protected static int MAX_GLADIATORS_ALLOWED = 5;
 	
+	protected static int MAX_TOURNAMENTS = 5; //limit for query on existing tournaments
+	
 	Pattern validName = Pattern.compile("[\\W\\s]");
 
-	protected static String challengeEntity = "challenge";
+	protected static String challengeEntity = "Challenge";
+	protected static String tournamentEntity = "Tournament";
+	
 	
 	protected static final Logger log = Logger.getLogger(BaseServlet.class.getName());
 	
@@ -67,6 +87,28 @@ public class BaseServlet extends HttpServlet {
 		//Basic write /print line function, used primarily for error message pages
 		resp.setContentType("text/plain");
 		resp.getWriter().println(content_string);
+	}
+	
+	public List<TournamentDataBean> getMatchResults(){
+		List<TournamentDataBean> out = new ArrayList<TournamentDataBean>();
+		List<Entity> tournaments = null;
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Query trn = new Query(tournamentEntity);
+		Filter pnding = new FilterPredicate("status", FilterOperator.EQUAL, "Complete");
+		trn.setFilter(pnding);
+		trn.addSort("eventDate", SortDirection.ASCENDING);
+		
+		tournaments = datastore.prepare(trn).asList(FetchOptions.Builder.withDefaults().limit(MAX_TOURNAMENTS));
+		if (tournaments == null || tournaments.size() == 0){//for those odd situations where there are no tournaments
+			return null;
+		} else {
+			for (Entity tourney : tournaments){
+				TournamentDataBean tournament = new TournamentDataBean(tourney, false);
+				tournament.getResults();
+				out.add(tournament);
+			}
+		}		
+		return out;	
 	}
 
 	//Session methods - creating and setting variables
