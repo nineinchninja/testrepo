@@ -24,6 +24,8 @@
 </tr>
 </table>
 <hr>
+<h3>Next tournament: ${nextTournament}</h3>
+<hr>
 <h3>Challenges awaiting a decision</h3>
 <c:forEach var="gladiator" items="${UserData.ludus.gladiators}">
 	<table class="table-results" border="1">

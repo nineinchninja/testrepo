@@ -24,6 +24,7 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 	
 	protected static final Logger log = Logger.getLogger(TournamentDataBean.class.getName());
 	
+
 	private Date createdDate;
 	private Date eventDate;
 	
@@ -61,6 +62,18 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 		
 	}
 	
+	public boolean checkTournamentDate() {
+		// TODO Auto-generated method stub		
+		
+		Calendar today = Calendar.getInstance(); // creates calendar
+		today.setTime(new Date());
+		Calendar event = Calendar.getInstance();
+		event.setTime(eventDate);
+	    log.info("Tournament date today?: " + (today.get(Calendar.DATE) == event.get(Calendar.DATE)));
+	    return (today.get(Calendar.DATE) == event.get(Calendar.DATE));
+	     // returns new date object for the time the tournament will happen		
+	}
+	
 	public List<GladiatorChallengeBean> executeTournament(){
 		this.setStatus("Complete");
 		List<GladiatorChallengeBean> matches = new ArrayList<GladiatorChallengeBean>();
@@ -75,12 +88,17 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 				if (bean.getStatusEnum().equals(Status.ACCEPTED)){
 					matches.add(bean);
 					
+				}
+				if (!TESTTOGGLE){
+					bean.setStatus(Status.EXPIRED);
+					bean.saveChallenge();
 				}				
-				bean.setStatus(Status.EXPIRED);
-				bean.saveChallenge();
 			}
 		}
-		this.saveTournament();
+		if (!TESTTOGGLE){
+			this.saveTournament();
+		}
+		
 		log.info("Created " + matches.size() + " matches for the tournament");
 		return matches;
 	}
@@ -110,7 +128,7 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 		Query qy = new Query(matchResultEntity, thisEntity.getKey());
 		FetchOptions options = FetchOptions.Builder.withChunkSize(200);
         PreparedQuery preparedQuery = datastore.prepare(qy);
-        log.info("FOUNDEDEDED " + preparedQuery.countEntities(options) + " match result entities"); 
+        log.info("Found " + preparedQuery.countEntities(options) + " match result entities"); 
         for (Entity resul : preparedQuery.asIterable(options)){
         	results.add(new MatchResultBean(resul));
         }			
@@ -123,7 +141,7 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 		Query qy = new Query(challengeEntity, thisEntity.getKey());
 		FetchOptions options = FetchOptions.Builder.withChunkSize(200);
         PreparedQuery preparedQuery = datastore.prepare(qy);
-        log.info("FOUNDEDEDED " + preparedQuery.countEntities(options) + " entities"); 
+        log.info("Found " + preparedQuery.countEntities(options) + " entities"); 
         for (Entity chal : preparedQuery.asIterable(options)){
         	challenges.add(new GladiatorChallengeBean(chal, true));
         }		
@@ -132,7 +150,7 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 	private void setUpBean() {
 		createdDate = (Date) thisEntity.getProperty("createdDate");
 		eventDate = (Date) thisEntity.getProperty("eventDate");		
-		
+		status = (String) thisEntity.getProperty("status");		
 	}
 
 	public Date getCreatedDate() {
@@ -189,6 +207,5 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 	public void setStatus(String status){
 		this.status = status;
 		thisEntity.setProperty("status", this.status);
-	}
-	
+	}	
 }

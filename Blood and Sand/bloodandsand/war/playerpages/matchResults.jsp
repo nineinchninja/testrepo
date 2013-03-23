@@ -23,6 +23,7 @@
 </tr>
 </table>
 <hr>
+
 <table class="table-results">
 <c:forEach var="tournament" items="${ResultsBeanData}">
 	<tr>

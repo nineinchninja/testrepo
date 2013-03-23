@@ -5,6 +5,8 @@ import java.util.Set;
 import com.bloodandsand.beans.GladiatorChallengeBean;
 
 public abstract class CoreBean {
+	
+	protected static final boolean TESTTOGGLE = false;
 	//Datastore key related strings
 
 	protected static String gladiatorEntity = "Gladiator";	
@@ -25,9 +27,9 @@ public abstract class CoreBean {
 	protected static int BASE_NUMBER_OF_RECRUITS = 25;//used to limit the query for the market place
 	protected static int BASE_NUMBER_OF_TRAINING_GLADIATORS = 1000; //used to create the query for applying training
 	protected static int BASE_NUMBER_OF_CHALLENGEABLE_GLADIATORS = 1000;
-	protected static int BASE_NUMBER_FOR_TRAINING_SOFTCAP = 350;
+	protected static int BASE_NUMBER_FOR_ATTRIBUTE_TRAINING_SOFTCAP = 270;
 	protected static int MAXIMUM_ATTRIBUTE_SCORE = 50;
-	protected static int MAXIMUM_SKILL_SCORE = 20;
+	protected static int MAXIMUM_SKILL_SCORE = 50;
 	protected static int TRAINING_INCREMENT_AMOUNT = 1; //the amount a skill or attribute increases by on successful training
 	
 	protected static String[] ATTRIBUTES = {"strength", "agility", "speed", "intelligence", "constitution", "willpower"};
@@ -35,7 +37,7 @@ public abstract class CoreBean {
 	
 	public enum Status {INITIATED, ACCEPTED, DECLINED, EXPIRED, CANCELED};	
 	
-	protected int tournamentFrequency = 48 ;
+	protected int tournamentFrequency = 48 ;//hours between scheduled tournaments
 	protected static int MAX_TOURNAMENTS = 5; //limit for query on existing tournaments
 
 }

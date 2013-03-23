@@ -139,9 +139,9 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		c.incumbant = g.getDummyGladiator();
 
 		c.challenger.setName("challenger");
-		c.challenger.setOwner("owner2");
+		c.challenger.setOwner("owner2", null);
 		c.incumbant.setName("incumbant");
-		c.incumbant.setOwner("owner1");
+		c.incumbant.setOwner("owner1", null);
 		c.wager = 10;
 		setUpEntity();
 		return c;
@@ -345,6 +345,4 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 	public String getGladiatorChallengeKey(){
 		return thisEntity.getKey().toString();
 	}
-	
-
 }

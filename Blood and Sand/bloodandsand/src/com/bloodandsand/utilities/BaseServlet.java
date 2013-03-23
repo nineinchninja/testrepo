@@ -12,6 +12,7 @@ import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
+import com.google.appengine.api.datastore.PropertyProjection;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
@@ -20,7 +21,9 @@ import com.google.appengine.api.datastore.Query.SortDirection;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -42,6 +45,8 @@ public class BaseServlet extends HttpServlet {
 	
 	//
 	public Cookie[] cookies;
+	
+	protected static final boolean TESTTOGGLE = false;//this turns on various testing functions, additional logging etc
 	
 	protected static String loginPage = "/admin/login.jsp";
 	protected static String loginRedirect = "/login";
@@ -96,7 +101,7 @@ public class BaseServlet extends HttpServlet {
 		Query trn = new Query(tournamentEntity);
 		Filter pnding = new FilterPredicate("status", FilterOperator.EQUAL, "Complete");
 		trn.setFilter(pnding);
-		trn.addSort("eventDate", SortDirection.ASCENDING);
+		trn.addSort("eventDate", SortDirection.DESCENDING);
 		
 		tournaments = datastore.prepare(trn).asList(FetchOptions.Builder.withDefaults().limit(MAX_TOURNAMENTS));
 		if (tournaments == null || tournaments.size() == 0){//for those odd situations where there are no tournaments
@@ -109,6 +114,32 @@ public class BaseServlet extends HttpServlet {
 			}
 		}		
 		return out;	
+	}
+	
+	public String getNextTournamentDate(){
+		Query tourneys = new Query(tournamentEntity);
+		tourneys.addProjection(new PropertyProjection("eventDate", Date.class));
+		Filter pnding = new FilterPredicate("status", FilterOperator.EQUAL, "Pending");
+		tourneys.setFilter(pnding);
+		tourneys.addSort("eventDate", SortDirection.DESCENDING);
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		List<Entity> trns = datastore.prepare(tourneys)
+		                                  .asList(FetchOptions.Builder.withLimit(MAX_TOURNAMENTS));
+		if (trns.size() > 0){
+			Date event = (Date)trns.get(0).getProperty("eventDate");
+			
+			DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
+			
+			return df.format(event);
+		} else {
+			return "No tournament scheduled";
+		}
+		
+		
+		
+		
+		
+		
 	}
 
 	//Session methods - creating and setting variables
@@ -233,6 +264,12 @@ public class BaseServlet extends HttpServlet {
 		    }
 
 		 return sb.toString();
+	}
+	
+	public String capitalizeWord(String s){
+		
+		String capital   = Character.toString(s.charAt(0)).toUpperCase();
+		return capital + s.substring(1);
 	}
 	
 	public boolean checkValidCharacters(String entry){

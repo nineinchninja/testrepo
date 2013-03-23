@@ -28,6 +28,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 	 */
 	protected static final Logger log = Logger.getLogger(MatchResultBean.class.getName());
 	
+	
 	private static final long serialVersionUID = 5687618169542410632L;
 	private GladiatorDataBean challenger;
 	private GladiatorDataBean incumbant;
@@ -38,42 +39,25 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 	private String challengerName;
 	private Key incumbantKey;
 	private Key challengerKey;
+	
 	private String challengerPossessive;
 	private String incumbantPossessive;
+	private String challengerWeapon;
+	private String incumbantWeapon;
 	
-	private Date matchDate;
-	
-	private String challengerAction;
-	private String incumbantAction;
-	
-	private String challengerRiposte;
-	private String incumbantRiposte;
-	
-	private String challengerResult;
-	private String incumbantResult;
-	
-	private String challengerLocation;
-	private String challengerDamage;
-	private String incumbantLocation;
-	private String incumbantDamage;
-	
-	private String challengerState;
-	private String incumbantState;
-		
+	private Date matchDate;	
 	private long round;
-	private String roundDescription;
-	private ArrayList<String> roundsDetails;//contains a simple string with all details for each round that can be parsed later if I want to get additional details
+	
 	private String fightDescription;
 	
 	private Entity thisEntity = new Entity(matchResultEntity);
 	
 	public MatchResultBean(Entity e){
 		thisEntity = e;
-		setUpBean();
-		
+		setUpBean();		
 	}
 	
-	public MatchResultBean (GladiatorDataBean challenger, GladiatorDataBean incumbant){
+	public MatchResultBean (GladiatorDataBean challenger, GladiatorDataBean incumbant, String challengerWeapon, String incumbantWeapon){
 		
 		this.challenger = challenger;
 		this.incumbant = incumbant;
@@ -84,32 +68,30 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 		this.challengerName = challenger.getName();
 		this.incumbantName = incumbant.getName();
 		
+		this.challengerWeapon = challengerWeapon;
+		this.incumbantWeapon = incumbantWeapon;
+		
 		challengerPossessive = challenger.getPossessive();
 		incumbantPossessive = incumbant.getPossessive();
 		
-		roundDescription = "";
-		roundsDetails = new ArrayList<String>();
 		fightDescription = ""; 
-		
-		challengerAction = "";
-		incumbantAction = "";
-		
-		challengerRiposte = "";
-		incumbantRiposte = "";
-		
-		challengerResult = "";
-		incumbantResult = "";
-		
-		challengerState = "";
-		incumbantState = "";		
 		
 		matchDate = new Date();
 		
-		round = 0;		
+		round = 0;	
 		winner = "";
+
 		setUpEntity();
 	}
 	
+	public void describeMatchStart() {
+		fightDescription = "The bout between " + challengerName + " and " + incumbantName + " is about to begin. ";
+		fightDescription += "The gladiators enter the arena from opposite sides. " + challengerName + ", the challenger, is wielding a " + challengerWeapon +
+				" while " + incumbantName + " wields " + incumbantWeapon + ". ";
+		fightDescription += "The fighters meet face to face in the middle, and the announcer hits the starting bell. The match has begun!\n";
+		
+	}
+
 	private void setUpBean(){
 		challengerKey = (Key) this.thisEntity.getProperty("challengerKey");
 		incumbantKey = (Key) this.thisEntity.getProperty("incumbantKey");
@@ -211,102 +193,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 		thisEntity.setProperty("matchDate", matchDate);
 	}
 
-	public String getChallengerAction() {
-		return challengerAction;
-	}
-
-	public void setChallengerAction(String challengerAction) {
-		this.challengerAction = challengerAction;
-	}
-
-	public String getIncumbantAction() {
-		return incumbantAction;
-	}
-
-	public void setIncumbantAction(String incumbantAction) {
-		this.incumbantAction = incumbantAction;
-	}
-
-	public String getChallengerRiposte() {
-		return challengerRiposte;
-	}
-
-	public void setChallengerRiposte(String challengerRiposte) {
-		this.challengerRiposte = challengerRiposte;
-	}
-
-	public String getIncumbantRiposte() {
-		return incumbantRiposte;
-	}
-
-	public void setIncumbantRiposte(String incumbantRiposte) {
-		this.incumbantRiposte = incumbantRiposte;
-	}
-
-	public String getChallengerResult() {
-		return challengerResult;
-	}
-
-	public void setChallengerResult(String challengerResult) {
-		this.challengerResult = challengerResult;
-	}
-
-	public String getIncumbantResult() {
-		return incumbantResult;
-	}
-
-	public void setIncumbantResult(String incumbantResult) {
-		this.incumbantResult = incumbantResult;
-	}
-
-	public String getChallengerLocation() {
-		return challengerLocation;
-	}
-
-	public void setChallengerLocation(String challengerLocation) {
-		this.challengerLocation = challengerLocation;
-	}
-
-	public String getChallengerDamage() {
-		return challengerDamage;
-	}
-
-	public void setChallengerDamage(String challengerDamage) {
-		this.challengerDamage = challengerDamage;
-	}
-
-	public String getIncumbantLocation() {
-		return incumbantLocation;
-	}
-
-	public void setIncumbantLocation(String incumbantLocation) {
-		this.incumbantLocation = incumbantLocation;
-	}
-
-	public String getIncumbantDamage() {
-		return incumbantDamage;
-	}
-
-	public void setIncumbantDamage(String incumbantDamage) {
-		this.incumbantDamage = incumbantDamage;
-	}
-
-	public String getChallengerState() {
-		return challengerState;
-	}
-
-	public void setChallengerState(String challengerState) {
-		this.challengerState = challengerState;
-	}
-
-	public String getIncumbantState() {
-		return incumbantState;
-	}
-
-	public void setIncumbantState(String incumbantState) {
-		this.incumbantState = incumbantState;
-	}
-
+	
 	public long getRound() {
 		return round;
 	}
@@ -314,22 +201,6 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 	public void setRound(long round) {
 		this.round = round;
 		thisEntity.setProperty("totalRounds", round);
-	}
-
-	public String getRoundDescription() {
-		return roundDescription;
-	}
-
-	public void setRoundDescription(String roundDescription) {
-		this.roundDescription = roundDescription;
-	}
-
-	public ArrayList<String> getRoundsDetails() {
-		return roundsDetails;
-	}
-
-	public void setRoundsDetails(ArrayList<String> roundsDetails) {
-		this.roundsDetails = roundsDetails;
 	}
 
 	public String getFightDescription() {
@@ -341,259 +212,16 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 		thisEntity.setProperty("fightDescription", new Text(fightDescription));
 	}
 
-	public void initializeNewRound (int round){
+	public void initializeNewRound (long round){
 		this.round = round;
-		setRoundDescription ("");
-		
-		challengerAction = "";
-		incumbantAction = "";
-		
-		challengerRiposte = "";
-		incumbantRiposte = "";
-		
-		challengerResult = "";
-		incumbantResult = "";
-		
-		challengerLocation = "";
-		challengerDamage = "";
-		
-		incumbantLocation = "";
-		incumbantDamage = "";
-		
-		challengerState = "";
-		incumbantState = "";	
-		
+		if (TESTTOGGLE){fightDescription += "\nStart of round " + round +"\n";}
 	}	
 	
-	public void recordActions (String challengerAction, String incumbantAction){
-		this.challengerAction = challengerAction;
-		this.incumbantAction= incumbantAction;
-	}
 	
-	public void recordRiposte (String riposte, String name){
-		if (name.equals(challengerName)){
-			challengerRiposte= riposte;
-			log.info(name + ": recorded riposte: " + riposte);
-		} else {
-			incumbantRiposte= riposte;
-			log.info(name + ": recorded riposte: " + riposte);
-		}
-	}
+	public void completeRound(){
+		//TODO
 	
-	public void recordResults (String name, String outcome){//records taunts, positions, defend and rests
-		if (name.equals(challengerName)){
-			challengerResult = outcome;
-			
-		} else {
-			incumbantResult = outcome;
-		}
-		log.info(name + " outcome: " + outcome );
-	}
-	
-	public void recordResults (String name, String outcome, String location, String damage){//records attacks
-		if (name.equals(challengerName)){
-			challengerResult = outcome;
-			if (outcome.equals("HIT")){
-				challengerLocation = location;
-				challengerDamage = damage;
-				challengerResult += location+damage;
-			}
-
-		} else {
-			incumbantResult = outcome;
-			if (outcome.equals("HIT")){
-				incumbantLocation = location;
-				incumbantDamage = damage;
-				incumbantResult += location+damage;
-			}
-		}
-	}
-	
-	public void recordStatus(String name, String status){
-		if (name.equals(challengerName)){
-			challengerState = status;
-		} else {
-			incumbantState = status;
-		}
-	}
-	
-	public String getRoundDetails(int round){ //TODO returns a semi-formatted string of the details for the round
-		return "";
-	}
-	
-	public String completeRound(){
-		
-		roundDescription = "Round " + round  + "\n";
-		roundDescription += getAction(challenger, challengerAction) + "\n";
-		roundDescription += getAction(incumbant, incumbantAction) + "\n";
-		
-		if (challengerRiposte != null && challengerRiposte != ""){
-			roundDescription += getRiposte(challenger, challengerRiposte) + "\n";
-		}
-		if (incumbantRiposte != null && incumbantRiposte != ""){
-			roundDescription += getRiposte(incumbant, incumbantRiposte) + "\n";
-		}
-		
-		roundDescription += getResult(challenger, challengerAction, challengerRiposte, challengerResult, challengerLocation, challengerDamage) + "\n";
-		roundDescription += getResult(incumbant, incumbantAction, incumbantRiposte, incumbantResult, incumbantLocation, incumbantDamage) + "\n";
-		
-		roundDescription += getState(challenger, challengerState) + "\n";
-		roundDescription += getState(incumbant, incumbantState);
-			
-		roundDescription += "\n";
-		
-		roundsDetails.add((int) round, "ChallengerAction:"+ challengerAction + "::" +
-								"IncumbantAction:" + incumbantAction + "::" +
-								"ChallengerRiposte:" + challengerRiposte + "::" +
-								"IncumbantRiposte:" + incumbantRiposte + "::" +
-								"ChallengerResult:" + challengerResult + "::" +
-								"IncumbantResult:" + incumbantResult + "::" +
-								"ChallengerState:" + challengerState + "::" +
-								"IncumbantState:" + incumbantState); 
-		log.info("ChallengerAction:"+ challengerAction + "::" +
-				"IncumbantAction:" + incumbantAction + "::" +
-				"ChallengerRiposte:" + challengerRiposte + "::" +
-				"IncumbantRiposte:" + incumbantRiposte + "::" +
-				"ChallengerResult:" + challengerResult + "::" +
-				"IncumbantResult:" + incumbantResult + "::" +
-				"ChallengerState:" + challengerState + "::" +
-				"IncumbantState:" + incumbantState);
-		fightDescription += roundDescription;
 		setUpEntity();
-		return roundDescription; //this is a hack to get things moving. It should be revamped for formatting etc
-	}
-	
-	private String getState(GladiatorDataBean glad, String state) {
-		
-		String name = glad.name;
-		return name + ": " + state;
-	}
-
-	private String getResult(GladiatorDataBean glad,
-			String action, String riposte, String outcome,
-			String location, String damage) {
-		
-		String name = glad.name;
-		String poss = glad.getPossessive();
-		String roundAction = "";
-		
-		if (riposte != null && riposte != ""){
-			roundAction = riposte;
-		} else {
-			roundAction = action;
-		}
-		if (location == null){
-			location = "error";
-		}
-		
-		if (roundAction.equals("Defend") || roundAction.equals("Rest") ){
-			return name + " stands idle";
-		} else {
-			if (roundAction.equals("Taunt") ){
-				if (outcome.equals("HIT")){
-					return name + "'s opponent looks angered by the insult";
-				} else {
-					return name + "'s opponent ignores the insult";
-				}
-			} else {
-				if (roundAction.equals("Position") ){
-					if (outcome.equals("HIT")){
-						return name + " moves into a better position";
-					} else {
-						return name + " can't seem to flank " + poss + " oppoonent";
-					}
-				} else {
-					if (roundAction.equals("Attack")){
-						if (outcome.equals("DODGED")){
-							return name + "'s opponent dodged " + poss + " attack";
-						} else {
-							if (outcome.equals("BLOCKED")){
-								return name + "'s opponent dodged " + poss + " attack";
-							} else {
-								if (outcome.equals("MISS")){
-									return name + " missed!";
-								} else {
-									if (damage.equals("broken")){
-										return name + " hit " + poss + " opponent in the " + location + " and it appears to be a serious injury!";
-									} else {
-										if (damage.equals("damaged")){
-											return name + " hit " + poss + " opponent in the " + location + "!";
-											
-										} else {
-											return name + " hit " + poss + " opponent in the " + location + " but didn't cause any serious damage";
-										}
-										
-									}
-										
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	
-		return "";
-	}
-
-	private String getRiposte(GladiatorDataBean glad, String action){
-		String poss = glad.getPossessive();
-		String name = glad.getName();
-		
-		if (action.equals("Attack")){
-			return name + " quickly changes " + poss + " tactics and moves to attack.";
-		} else {
-			if (action.equals("Position")){
-				return name + " quickly changes " + poss + " tactics and attempts to out manouever " + poss + " opponent.";
-			} else {
-				if (action.equals("Defend")){
-					return name + " quickly changes " + poss + " tactics and moves into a defensive stance.";
-				} else {
-					if (action.equals("Taunt")){
-						return name + " throws insults at " + poss + " opponent, trying to get " + 
-								poss + " opponent angry.";
-					} else {
-						if (action.equals("Rest")){
-							return name + " sees an opportunity to regain some energy and changes tactics to a quick breather.";
-						} else {
-							log.info(name + ": No valid action recieved for printing round details: " + action);
-							return "Error: no valid action received";
-						}
-					}
-				}
-			}
-		}
-		
-	}
-
-	private String getAction(GladiatorDataBean glad, String action){
-		String poss = glad.getPossessive();
-		String name = glad.getName();
-		
-		if (action.equals("Attack")){
-			return name + " moves to attack.";
-		} else {
-			if (action.equals("Position")){
-				return name + " attempts to out manouever " + poss + " opponent.";
-			} else {
-				if (action.equals("Defend")){
-					return name + " moves into a defensive stance.";
-				} else {
-					if (action.equals("Taunt")){
-						return name + " throws insults at " + poss + " opponent, trying to get " + 
-								poss + " opponent angry.";
-					} else {
-						if (action.equals("Rest")){
-							return name + " tries to regain some energy by grabbing a quick breather.";
-						} else {
-							log.info(name + ": No valid action recieved for printing round details: " + action);
-							return "Error: no valid action received";
-						}
-					}
-				}
-			}
-		}
-		
 	}
 
 	public void saveNewResults(TournamentDataBean tourney) {
@@ -612,19 +240,133 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 		        txn.rollback();
 		        log.warning("Save match result transaction failed: rolled back");
 		    }
-		}
-		
+		}		
 	}
 
 	public void setWinner(String winner) {
 		this.winner = winner;
-		thisEntity.setProperty("winner", winner);
-		
+		thisEntity.setProperty("winner", winner);		
 	}
 	
 	public String getWinner(){
 		return this.winner;
 	}
-	
+
+	public void recordHit(String fighterName) {
+		//TODO
+		fightDescription += fighterName + " hits his opponent. \n";
+		
+	}
+
+	public void recordBlock(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " blocks the attack with his weapon. \n";
+		
+	}
+
+	public void recordDodge(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " dodges the attack. \n";
+		
+	}
+
+	public void recordMiss(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " misses completely. \n";
+		
+	}
+
+	public void recordRest(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " is tiring and tries to catch his breath. \n";
+	}
+
+	public void recordRiposte(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " finds an opening and tries to counterattack! \n";
+		
+	}
+
+	public void recordAvoidRiposte(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " avoids the counterattack. \n";
+		
+	}
+
+	public void recordCriticalHit(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " has scored a good hit! \n";
+		
+	}
+
+	public void recordReceivedCritical(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " looks to be critically wounded. \n";
+		
+	}
+
+	public void recordResistedCritical(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " shrugs off the hit. \n";
+		
+	}
+
+	public void recordNormalWound(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " has received a minor wound.  \n";
+		
+	}
+
+	public void recordNormalHit(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " has just managed to hit. \n";
+		
+	}
+
+	public void writeSummaryStats() {
+		// TODO Auto-generated method stub
+		fightDescription += "summary stats will go here,\n";
+		
+	}
+
+	public void recordNonCriticalInjury(String fighterName, String location) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " has been scratched in the " + location.toLowerCase() + ". \n";
+		
+	}
+
+	public void recordCriticalInjury(String fighterName, String location) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " has been critically wounded in the " + location.toLowerCase() + ".\n";
+		
+	}
+
+	public void recordDeath(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " has died! Pity!";
+		
+	}
+
+	public void recordExhausted(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " looks exhausted. \n";
+		
+	}
+
+	public void recordTired(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " looks tired. \n";
+	}
+
+	public void recordTiring(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " seems to be tiring. \n";
+	}
+
+	public void recordConcede(String fighterName) {
+		// TODO Auto-generated method stub
+		fightDescription += fighterName + " is forced to concede. \n";
+		
+	}
 
 }

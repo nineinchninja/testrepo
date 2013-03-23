@@ -38,7 +38,7 @@
 	<th class="table-header">Daggers</th>
 	<th class="table-header">Spear</th>
 	<th class="table-header">Quarterstaff</th>
-	<th class="table-header">Hand to Hand</th>
+	<th class="table-header">Maul</th>
 </tr>
 <c:forEach var="gladiator" items='${UserData.ludus.gladiators}'>
 <tr class="table-results">	
@@ -55,7 +55,7 @@
 	<td><c:out value="${gladiator.weaponSkills.daggers}"></c:out></td>
 	<td><c:out value="${gladiator.weaponSkills.spear}"></c:out></td>
 	<td><c:out value="${gladiator.weaponSkills.quarterstaff}"></c:out></td>
-	<td><c:out value="${gladiator.weaponSkills.handToHand}"></c:out></td></tr>
+	<td><c:out value="${gladiator.weaponSkills.maul}"></c:out></td></tr>
 </c:forEach></table>
 <br>
 <hr>
@@ -89,7 +89,7 @@
 				  <option value="Daggers">Dagger Skill</option>
 				  <option value="Spear">Spear Skill</option>
 				  <option value="Quarterstaff">Quarterstaff Skill</option>
-				  <option value="HandToHand">Hand to Hand Skill</option>
+				  <option value="Maul">Maul</option>
 				  <option value="None">No training</option>
 			</select>
 		</td>

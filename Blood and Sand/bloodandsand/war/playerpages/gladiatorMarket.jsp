@@ -23,6 +23,8 @@
 </tr>
 </table>
 <hr>
+<h2>Your available funds: ${UserData.ludus.availableGold} gold</h2>
+<hr>
 <table class="table-results">
 <tr>
 	<th class="table-header">Gender</th>

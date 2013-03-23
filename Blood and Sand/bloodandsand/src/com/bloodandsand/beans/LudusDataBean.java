@@ -26,6 +26,8 @@ public class LudusDataBean extends CoreBean implements java.io.Serializable{
 	private long wageredGold;
 	private long weeklyCosts;
 	
+	private Entity thisEntity = new Entity(ludusEntity);
+	
 	public List<GladiatorDataBean> gladiators = null;
 	
 	private static final Logger log = Logger.getLogger(LudusDataBean.class.getName());
@@ -37,21 +39,31 @@ public class LudusDataBean extends CoreBean implements java.io.Serializable{
 		weeklyCosts = (long) 0;		
 	}
 	public LudusDataBean (Entity luds){//getting a ludus based on an entity
+		thisEntity = luds;
 		availableGold = (Long) luds.getProperty("availableGold");
 		wageredGold = (Long) luds.getProperty("wageredGold");
 		weeklyCosts = (Long) luds.getProperty("weeklyCosts");
-	}	
+	}
+	
+	private void setUpEntity(){
+		thisEntity.setProperty("availableGold", availableGold);
+		thisEntity.setProperty("wageredGold", wageredGold);
+		thisEntity.setProperty("weeklyCosts", weeklyCosts);
+	}
 	
 	public void setAvailableGold (Long availableGold){
 		this.availableGold = availableGold;		
+		thisEntity.setProperty("availableGold", availableGold);
 	}
 	
 	public void setWageredGold  (Long wageredGold){
-		this.wageredGold = wageredGold;		
+		this.wageredGold = wageredGold;	
+		thisEntity.setProperty("wageredGold", wageredGold);
 	}
 	
 	public void setWeeklyCost(Long weeklyCost){
 		this.weeklyCosts = weeklyCost;		
+		thisEntity.setProperty("weeklyCosts", weeklyCosts);
 	}
 	
 	public void setGladiators  (List<GladiatorDataBean> gladiators ){
@@ -79,15 +91,12 @@ public class LudusDataBean extends CoreBean implements java.io.Serializable{
 
 	}
 	
-	public void updateAvailableGold(long gold, String userName){
-		this.setAvailableGold(this.availableGold + gold);
-		UserDataBean usr = new UserDataBean();
-		Entity luds = usr.findUserLudus(userName);
+	public void saveLudus(){
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Transaction txn = datastore.beginTransaction();
-		try {											
-			luds.setProperty("availableGold", availableGold);
-			datastore.put(luds);
+		setUpEntity();
+		try {		
+			datastore.put(thisEntity);
 			txn.commit();
 		} finally {
 		    if (txn.isActive()) {
@@ -95,6 +104,13 @@ public class LudusDataBean extends CoreBean implements java.io.Serializable{
 		        log.warning("LudusDataBean.java: Gold transaction failed: rolled back");
 		    }
 		}
+	}
+	
+	public void updateAvailableGold(long gold){
+		this.setAvailableGold(this.availableGold + gold);
+		thisEntity.setProperty("availableGold", availableGold);
+		
+		
 	}
 	public List<GladiatorDataBean> getMyChallengeableGladiators() {
 		if (this.gladiators == null){

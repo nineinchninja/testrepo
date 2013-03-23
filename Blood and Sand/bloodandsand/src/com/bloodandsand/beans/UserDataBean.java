@@ -36,6 +36,8 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 	private String status;
 	private String userLevel; 
 	
+	private Key key;
+	
 	private Entity thisEntity = new Entity(accountEntity);
 	
 	public LudusDataBean ludus; 
@@ -49,6 +51,40 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 		
 	}
 	
+	public UserDataBean (Entity e){
+		thisEntity = e;
+		//ugly hack but too tired to do more
+		setUpBean();
+	}
+	
+	private void setUpBean(){
+		//set up the user variables relevant to web page rendering
+		userName = (String)thisEntity.getProperty("userName");
+		userLevel = (String) thisEntity.getProperty("userLevel");	
+		emailAddress = (String) thisEntity.getProperty("email");
+		lastSeen = (Date)thisEntity.getProperty("lastSeen");
+		createdDate = (Date)thisEntity.getProperty("createdDate");
+		key = thisEntity.getKey();
+		passwordHash = (String) thisEntity.getProperty("passwordHash");
+		key = thisEntity.getKey();
+		//attach the ludus and gladiator variables relevant to web page rendering
+
+		LudusDataBean ludusBean = new LudusDataBean(findUserLudus(userName));
+		
+		List<Entity> glads = getUsersGladiators(userName);
+		log.info("total gladiators in stable: " + glads.size());
+		List<GladiatorDataBean> gladlist = new ArrayList<GladiatorDataBean>();			
+		for  (Entity gladtr : glads){
+			
+			GladiatorDataBean gladiator = new GladiatorDataBean(gladtr);
+			gladiator.getGladiatorsChallenges(); //this call needs to be separate to avoid a nasty loop
+
+			gladlist.add(gladiator);			
+		}		
+		ludusBean.setGladiators(gladlist);
+		setLudus(ludusBean);		
+	}
+	
 	private void setUpEntity(){
 				
 		thisEntity.setProperty("userName", userName);
@@ -59,37 +95,16 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 		thisEntity.setProperty("created", createdDate);	
 		thisEntity.setProperty("lastSeen", lastSeen);		
 	}	
-	
-	public boolean populateUserDataBean(String UserName){
+		
+	public boolean populateUserDataBean(String UserName){//used when logging in. It's ugly but works for now
 		thisEntity = findUserEntityByName(UserName);
 		if (thisEntity == null){
 			return false;
-		} else {
-			//set up the user variables relevant to web page rendering
-			userName = (String)thisEntity.getProperty("userName");
-			userLevel = (String) thisEntity.getProperty("userLevel");	
-			emailAddress = (String) thisEntity.getProperty("email");
-			lastSeen = (Date)thisEntity.getProperty("lastSeen");
-			createdDate = (Date)thisEntity.getProperty("createdDate");
-			
-			//attach the ludus and gladiator variables relevant to web page rendering
-
-			LudusDataBean ludusBean = new LudusDataBean(findUserLudus(UserName));
-			
-			List<Entity> glads = getUsersGladiators(UserName);
-			log.info("total gladiators in stable: " + glads.size());
-			List<GladiatorDataBean> gladlist = new ArrayList<GladiatorDataBean>();			
-			for  (Entity gladtr : glads){
-				
-				GladiatorDataBean gladiator = new GladiatorDataBean(gladtr);
-				gladiator.getGladiatorsChallenges(); //this call needs to be separate to avoid a nasty loop
-
-				gladlist.add(gladiator);			
-			}		
-			ludusBean.setGladiators(gladlist);
-			setLudus(ludusBean);
+		} else {			
+			setUpBean();
 			setLastSeen(new Date());
 			return true;
+
 		}
 	}
 		
@@ -213,7 +228,15 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 		}
 	}
 	
-
+	public String getDataStoreKey(){
+		return KeyFactory.keyToString(thisEntity.getKey());
+	}
+	
+	public void setDataStoreKey(Key keyIn){
+		this.key = keyIn;
+	}
+	
+	
 	public void setPasswordHash(String pwd) throws NoSuchAlgorithmException, InvalidKeySpecException{
 		passwordHash = PasswordHash.createHash(pwd);
 		thisEntity.setProperty("passwordHash", pwd);		

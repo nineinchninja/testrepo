@@ -61,7 +61,7 @@ public class ApplyName extends BaseServlet {
 					gbean = gldtrs.next();
 					gladlist.add(gbean);
 					String newName = req.getParameter(gbean.getKey());
-					log.info("New name should be: " + newName);
+					
 					if ( newName != null && newName.length() >= 4 && checkValidCharacters(newName) && newName.length() < 14){						
 						log.info("New name passes muster and should be: " + newName);						
 						gbean.setName(newName);

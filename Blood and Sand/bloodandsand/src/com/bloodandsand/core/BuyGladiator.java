@@ -69,9 +69,9 @@ public class BuyGladiator extends BaseServlet{
 									log.info("BuyGladiator.java: User attempted to hold more than maximum number of gladiators");
 									write_line(req, resp, "You have the maximum number of gladiators already.");
 								} else {
-									selected.setNewOwner((String)req.getSession().getAttribute("username"), selected.getKey());//with the added key string it is saved to the datastore
+									selected.setNewOwner((String)req.getSession().getAttribute("username"), (String)usr.getDataStoreKey());//with the added key string it is saved to the datastore
 									usr.ludus.addNewGladiator(selected);//update the client so as to show the new gladiator when returning to home page
-									usr.ludus.updateAvailableGold(-(selected.getPrice()), (String)req.getSession().getAttribute("username"));
+									usr.ludus.updateAvailableGold(-(selected.getPrice()));
 									req.getSession().setAttribute(userBeanData, usr);
 									req.getSession().setAttribute(userDataRefresh, System.currentTimeMillis());
 									resp.sendRedirect(loginRedirect);

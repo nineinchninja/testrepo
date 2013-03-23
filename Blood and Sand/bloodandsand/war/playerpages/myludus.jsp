@@ -15,7 +15,7 @@
 </head>
 <body>
 <a href="/logout" class="login-link">logout</a>
-<span class="main-title">Welcome to your Ludus ${UserData.userName}</span>
+<span class="main-title">${capitalizedName}'s School of Gladiators</span>
 <hr>
 <table class="table-navigation">
 <tr>
@@ -32,14 +32,10 @@
 <br />Total gold available: <c:out value='${UserData.ludus.availableGold}' />
 <br />Total gold in wagers: <c:out value='${UserData.ludus.wageredGold}' />
 <br />Total weekly costs: <c:out value='${UserData.ludus.weeklyCost}' />
-	<h3>Recent Results</h3>
 <hr>
-<table class="table-results">
-<tr>
-<th class="table-header">Gladiator</th><th class="table-header">Match Type</th><th class="table-header">Result</th><th class="table-header">Winnings</th>
-</tr>
+	<h3>Next tournament: ${nextTournament}</h3>
+<hr>
 
-</table>
 <h3>Gladiators</h3>
 <hr>
 <c:set var="nameneeded" scope="session" value="False"/>

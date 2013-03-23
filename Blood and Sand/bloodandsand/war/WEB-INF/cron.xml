@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <cronentries>
   <cron>
-    <url>/cron/refreshRecruits</url>
+    <url>/cron/refreshrecruits</url>
     <description>Every midnight new gladiators are added to the available recruits</description>
     <schedule>every day 00:00</schedule>
     <timezone>America/New_York</timezone>
@@ -14,8 +14,8 @@
   </cron>
    <cron>
     <url>/cron/gladiatorcombat</url>
-    <description>Every 2 days the gladiators run a tournament</description>
-    <schedule>every mon,wed,fri 00:02</schedule>
+    <description>Every night the system checks for a tournament to run</description>
+    <schedule>every day 00:05</schedule>
     <timezone>America/New_York</timezone>
   </cron>
 </cronentries>

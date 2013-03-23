@@ -73,8 +73,9 @@ public class LoginServlet extends BaseServlet {
 			 log.info("The user " + username + " has logged in.");
 			 
 			 u.setUserName(username);
-			 
 			 sess.setAttribute("username", username);
+			 sess.setAttribute("capitalizedName", capitalizeWord(username));
+			 sess.setAttribute("nextTournament", getNextTournamentDate());
 			 
 			 boolean check = u.populateUserDataBean(username);
 			 if (check){
