@@ -14,29 +14,20 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.swing.SortOrder;
-
 
 import com.bloodandsand.beans.GladiatorChallengeBean;
 import com.bloodandsand.beans.GladiatorDataBean;
 import com.bloodandsand.beans.MatchResultBean;
 import com.bloodandsand.beans.TournamentDataBean;
 import com.bloodandsand.utilities.BaseServlet;
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.FetchOptions;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.PreparedQuery;
-import com.google.appengine.api.datastore.Query;
-import com.google.appengine.api.datastore.Query.SortDirection;
-import com.google.appengine.api.datastore.Transaction;
-import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
-import com.google.appengine.api.datastore.Query.Filter;
-import com.google.appengine.api.datastore.Query.FilterOperator;
-import com.google.appengine.api.datastore.Query.FilterPredicate;
+
 
 public class GladiatorCombat extends BaseServlet{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 362330166532786787L;
+
 	/* this is where the magic happens. This class will take two gladiators and 
 	 * run them through a combat sequence and record the outcome. At the end, 
 	 * the details of the combat will be available for the owners to read, and
@@ -117,7 +108,7 @@ public class GladiatorCombat extends BaseServlet{
 		
 		getGladiatorMatches();//gets all of the matches that are set to 'accepted' changes all other matches to expired
 		log.info("Total accepted challenges found: " + matches.size());
-		if (!matches.isEmpty()){
+		if (!matches.isEmpty() && matches != null){
 			long startMatchesTime = System.currentTimeMillis();
 			log.info("Total Time for getting matchups: " + (startTime - startMatchesTime));
 			
@@ -128,8 +119,7 @@ public class GladiatorCombat extends BaseServlet{
 				//creating the fighters obj by sending the gladiator bean populates all the initial variables
 				challenger = new Fighter(currentMatch.getChallenger());//this also calculates all initial variables and sets up the action table
 				incumbant = new Fighter(currentMatch.getIncumbant());
-				results_bean = new MatchResultBean(currentMatch.getChallenger(), currentMatch.getIncumbant(), challenger.weapon, incumbant.weapon);//TODO: set up bean should provide some starter text
-													// such as what weapon they're wielding, whether they look skilled with it, and some greeting or match opening
+				results_bean = new MatchResultBean(currentMatch.getChallenger(), currentMatch.getIncumbant(), challenger.weapon, incumbant.weapon);
 				combatComplete = false;
 				round = 0;	
 				results_bean.describeMatchStart();
@@ -140,9 +130,10 @@ public class GladiatorCombat extends BaseServlet{
 				}
 				while (!combatComplete){
 					
-					results_bean.initializeNewRound(round); //sets up the variables. Note that round 1 = round 0 in the bean
-					
 					round +=1;
+					
+					results_bean.initializeNewRound(round); //sets up the variables. 					
+					
 
 					if (incumbant.rollInitiative() > challenger.rollInitiative()){ //winner either attacks or rests. loser defends, attacks or rests
 						determineActions(incumbant, challenger); //first param = winner, second = loser
@@ -166,7 +157,7 @@ public class GladiatorCombat extends BaseServlet{
 					
 				}
 				//when combat is complete, declare winner, loser, store resultbean, update ludus and gladiator stats
-				closeMatch();
+				closeMatch(currentMatch);
 	
 				if (TESTTOGGLE){
 					write_line(req, resp, results_bean.getFightDescription());
@@ -178,6 +169,9 @@ public class GladiatorCombat extends BaseServlet{
 			log.info("End of matchups: " + endTime);
 			log.info("Total elapsed time: " + (endTime - startTime));
 			log.info("Total time for matches: " + (endTime - startMatchesTime));
+			
+			TournamentDataBean nextTourney = new TournamentDataBean();
+			nextTourney.saveTournament();
 			
 		} else {
 			log.info("GladiatorCombat.java - no tournament to run");
@@ -296,7 +290,7 @@ public class GladiatorCombat extends BaseServlet{
 	}
 
 	private void setRoundEndStats() {
-		// TODO Auto-generated method stub
+		// applies all stamina modifiers and other results of damage
 		incumbant.applyRoundEffects();
 		challenger.applyRoundEffects();	
 	}
@@ -315,13 +309,14 @@ public class GladiatorCombat extends BaseServlet{
 			return false;
 	}
 	
-	private void closeMatch() {
+	private void closeMatch(GladiatorChallengeBean match) {
 		//update the total matches for each gladiator:
 		
 		// declare the winner
 		if (challenger.status.equals("Dead") || challenger.status.equals("Concedes") ){
 			//incumbant wins
-			incumbant.gldtr.addWin(currentMatch.getWager()); //adds a match to the total and increments total matches
+			incumbant.gldtr.addWin(); //adds a match to the total and increments total matches
+			match.applyIncumbantWin(); //awards the wager, if any, plus standard win amount
 			log.info(incumbant.fighterName + " declared winner!");
 			challenger.gldtr.addLoss();
 			results_bean.setWinner(incumbant.fighterName);			
@@ -331,7 +326,8 @@ public class GladiatorCombat extends BaseServlet{
 		} else {
 			if ( incumbant.status.equals("Dead") || incumbant.status.equals("Concedes") ){
 				//challenger wins
-				challenger.gldtr.addWin(currentMatch.getWager()); //adds a match to the total and increments total matches
+				challenger.gldtr.addWin(); //adds a match to the total and increments total matches
+				match.applyChallengerWin();//awards the challenger with the standard amount for winning plus any wager
 				incumbant.gldtr.addLoss();
 				log.info(challenger.fighterName + " declared winner!");
 				results_bean.setWinner(challenger.fighterName);				
@@ -340,22 +336,20 @@ public class GladiatorCombat extends BaseServlet{
 				}
 			} else {
 				//tie
-				challenger.gldtr.addTie();
-				
+				challenger.gldtr.addTie();				
 				incumbant.gldtr.addTie();
+				match.applyTie();//restores the wagered gold to available gold for each ludus
 				results_bean.setWinner("Tie");
 				log.info("Match declared a draw");
 			}
 		}
 		//store all data
 		if (!TESTTOGGLE){
+			match.saveChallenge();
 			challenger.gldtr.saveGladiator();
 			incumbant.gldtr.saveGladiator();
 			results_bean.saveNewResults(tournament);
 			results_bean.writeSummaryStats();
-			
-			TournamentDataBean nextTourney = new TournamentDataBean();
-			nextTourney.saveTournament();
 		}
 
 	}
@@ -370,6 +364,11 @@ public class GladiatorCombat extends BaseServlet{
 		GladiatorChallengeBean temp = new GladiatorChallengeBean();
 		
 		tournament = temp.getTournament();
+		//if (TESTTOGGLE){
+			log.info("GladiatorCombat set new tournament date");
+			tournament.setEventDate(new Date());
+			tournament.saveTournament();
+		//}
 		if (tournament.checkTournamentDate()){
 			log.info("tournament scheduled for today");
 			for (GladiatorChallengeBean match: tournament.executeTournament()){
@@ -377,11 +376,7 @@ public class GladiatorCombat extends BaseServlet{
 			} 
 			log.info("GladiatorCombat - total matches for tournament= " + matches.size());
 		} else {
-			if (TESTTOGGLE){
-				log.info("GladiatorCombat set new tournament date");
-				tournament.setEventDate(new Date());
-				tournament.saveTournament();
-			}			
+			//log.info("tournament date not equal to today, no tournament run");
 		}
 	}
 		
@@ -476,9 +471,15 @@ public class GladiatorCombat extends BaseServlet{
 			
 			getWeaponBonuses();			
 			
-			baseQuitChance = baseWillpower + baseAggression + baseBloodlust;
+			baseQuitChance = 100 * ((baseWillpower + baseAggression + baseBloodlust) / BASE_DETERMINATION);
+			if (baseQuitChance <= MINIMUM_DETERMINATION){
+				baseQuitChance = MINIMUM_DETERMINATION;
+			}
 			
 			baseResistCritChance = baseConstitution * 2;
+			if (baseResistCritChance > MAXIMUM_CRITICAL_RESIST_CHANCE){
+				baseResistCritChance = MAXIMUM_CRITICAL_RESIST_CHANCE;
+			}
 			baseResistDeathChance = BASE_CHANCE_OF_DEATH - baseConstitution/BASE_CHANCE_OF_DEATH_DENOMINATOR;
 			baseRestBonus = getRestBonus();	
 			
@@ -630,9 +631,12 @@ public class GladiatorCombat extends BaseServlet{
 				determineIfCanContinue();
 			}			
 			
-			if (!status.equals("Dead") && ! status.equals("Concedes")){
+			if (!status.equals("Dead") && !status.equals("Concedes")){
 				
-				currentInitiative = (long) (baseInitiative * staminaAdjustment);		
+				currentInitiative = (long) (baseInitiative * staminaAdjustment);	
+				if (currentInitiative < MINIMUM_INITIATIVE ){
+					currentInitiative = MINIMUM_INITIATIVE;
+				}
 				
 				currentRestChance50 = getRestChance50();//these need current stamina to be calculated
 				currentRestChance25 = getRestChance25();

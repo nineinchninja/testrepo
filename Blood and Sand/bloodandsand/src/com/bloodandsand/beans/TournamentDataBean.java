@@ -1,6 +1,5 @@
 package com.bloodandsand.beans;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -16,12 +15,15 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Transaction;
-import com.google.appengine.api.datastore.Query.Filter;
-import com.google.appengine.api.datastore.Query.FilterOperator;
-import com.google.appengine.api.datastore.Query.FilterPredicate;
 
 public class TournamentDataBean extends CoreBean implements java.io.Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 108501788037447758L;
+
+
 	protected static final Logger log = Logger.getLogger(TournamentDataBean.class.getName());
 	
 
@@ -85,14 +87,16 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 			return null;
 		} else {
 			for (GladiatorChallengeBean bean : this.challenges){
+				
 				if (bean.getStatusEnum().equals(Status.ACCEPTED)){
 					matches.add(bean);
 					
-				}
-				if (!TESTTOGGLE){
-					bean.setStatus(Status.EXPIRED);
-					bean.saveChallenge();
-				}				
+				} else {//if the challenge is expired, it needs to have the wager refunded
+					if (!TESTTOGGLE && bean.getStatusEnum().equals(Status.INITIATED)){//test togglemakes it possible to run the tournament multiple times 
+						bean.setStatus(Status.EXPIRED);						
+					}
+				} //else
+				bean.saveChallenge();			
 			}
 		}
 		if (!TESTTOGGLE){

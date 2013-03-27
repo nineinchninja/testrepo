@@ -7,20 +7,16 @@ package com.bloodandsand.core;
 import com.bloodandsand.utilities.BaseServlet;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
+
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import com.bloodandsand.beans.GladiatorDataBean;
-import com.bloodandsand.beans.LudusDataBean;
 import com.bloodandsand.beans.UserDataBean;
 
 /**
@@ -33,7 +29,7 @@ public class GladiatorTraining  extends BaseServlet{
 	
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 		      throws IOException, ServletException {
-		HttpSession sess = req.getSession();
+		//HttpSession sess = req.getSession();
 		if (!checkLogin(req) || req.getSession().getAttribute(userBeanData) == null){			
 			resp.sendRedirect(loginPage);
 		} else {

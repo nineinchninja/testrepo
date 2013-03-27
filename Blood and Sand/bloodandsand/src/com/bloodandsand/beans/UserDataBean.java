@@ -69,7 +69,7 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 		key = thisEntity.getKey();
 		//attach the ludus and gladiator variables relevant to web page rendering
 
-		LudusDataBean ludusBean = new LudusDataBean(findUserLudus(userName));
+		LudusDataBean ludusBean = new LudusDataBean(findUserLudus(thisEntity));
 		
 		List<Entity> glads = getUsersGladiators(userName);
 		log.info("total gladiators in stable: " + glads.size());
@@ -286,10 +286,10 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 		return PasswordHash.validatePassword(pwd, passHash);		
 	}
 	
-	public Entity findUserLudus (String usrName){
+	public Entity findUserLudus (Entity thisEntity2){
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Entity usr = findUserEntityByName(usrName);
-		Key usrKey = usr.getKey();
+	
+		Key usrKey = thisEntity2.getKey();
 		
 		Query ludusQuery = new Query(ludusEntity).setAncestor(usrKey);
 		Entity ludus = datastore.prepare(ludusQuery).asSingleEntity();

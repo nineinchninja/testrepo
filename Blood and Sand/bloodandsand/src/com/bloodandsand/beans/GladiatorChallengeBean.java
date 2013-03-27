@@ -20,7 +20,6 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Transaction;
-import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
@@ -45,6 +44,9 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 	public Date challengeDate;
 	private GladiatorDataBean challenger;
 	private GladiatorDataBean incumbant;
+	
+	public LudusDataBean challengerLudus;
+	public LudusDataBean incumbantLudus;
 	
 	public Key challengerKey;//always store these using the keytostring function
 	public Key incumbantKey;
@@ -117,17 +119,37 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		Query trn = new Query(tournamentEntity);
 		Filter pnding = new FilterPredicate("status", FilterOperator.EQUAL, "Pending");
 		trn.setFilter(pnding);
-		trn.addSort("eventDate", SortDirection.ASCENDING);
+		trn.addSort("eventDate", SortDirection.DESCENDING);
 		
 		tournaments = datastore.prepare(trn).asList(FetchOptions.Builder.withDefaults().limit(MAX_TOURNAMENTS));
 		if (tournaments == null || tournaments.size() == 0){//for those odd situations where there are no tournaments
-			log.info("Creating new tournament");
+			
+			log.info("No existing tournament. Created new tournament");
 			TournamentDataBean tournament = new TournamentDataBean();
 			tournament.saveTournament();
+			log.info("No existing tournament. Created new tournament: " + tournament.getKey());
 			return tournament;
 		} else {
+			if (tournaments.size() > 1){
+				log.warning("Multiple Pending tournaments in system.");
+			}
 			return new TournamentDataBean (tournaments.get(0), false);
 		}
+	}
+	
+	public void findLuduses(){
+		//this simply populates the bean's ludus fields
+		if (challenger == null || incumbant == null){
+			findIncumbant();
+			findChallenger();
+		}
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		Query findLud = new Query(ludusEntity).setAncestor(challenger.getOwnerKey());
+		Entity temp = datastore.prepare(findLud).asSingleEntity();
+		challengerLudus = new LudusDataBean(temp);
+		findLud = new Query(ludusEntity).setAncestor(incumbant.getOwnerKey());
+		temp = datastore.prepare(findLud).asSingleEntity();
+		incumbantLudus = new LudusDataBean(temp);
 	}
 	
 	public GladiatorChallengeBean createDummyChallenge(){
@@ -147,7 +169,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		return c;
 	}
 	
-	public boolean acceptChallenge(){
+	public boolean acceptChallenge() {
 		//check both gladiators to see if they have accepted a challenge. If not,
 		// update this challenge and all of the gladiators' challenges to declined
 		
@@ -177,6 +199,17 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 				}
 			}			
 			if (successful){
+				//first need to apply the wager to the incumbant. It was already set for the challenger when the challenge was created
+				//but only if there is a wager
+//				if (wager > 0){
+//					if (incumbantLudus == null){
+//						findLuduses();
+//					}
+//					incumbantLudus.setWager(this.wager);
+//					incumbantLudus.saveLudus();
+//					
+//				}
+				
 				this.status = Status.ACCEPTED;
 				this.saveChallenge();
 				log.info("New status is " + this.status.toString());
@@ -205,19 +238,27 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		}		
 	}
 
-	public void expireChallenge(){
+	public void expireChallenge() throws EntityNotFoundException{
 		status = Status.EXPIRED;
+		refundWager();
 		thisEntity.setProperty("status",this.status.toString());
 	}
 	
-	public void declineChallenge(){
+	public void declineChallenge() {
 		this.status = Status.DECLINED;
-
+		//need to update wager if exists
+		if (wager > 0){
+			refundWager();
+		}
 		thisEntity.setProperty("status",this.status.toString());
 	}
 	
-	public void rescindChallenge(){
+	public void rescindChallenge() {
 		status = Status.CANCELED;
+		
+		if (wager > 0){
+			refundWager();
+		}
 
 		thisEntity.setProperty("status",this.status.toString());
 	}
@@ -234,6 +275,20 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		this.status = sts;	
 
 		thisEntity.setProperty("status",this.status.toString());
+	}
+	
+	private void refundWager() {
+		//used when challenges are declined, expired or canceled
+		if (wager > 0){
+			if (challengerLudus == null){
+				//go get challenger				
+				this.findLuduses();
+			} 
+			challengerLudus.setWager(-(this.wager));
+			challengerLudus.saveLudus();
+			//
+
+		}
 	}
 	
 	public void findChallenger(){
@@ -344,5 +399,59 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 	
 	public String getGladiatorChallengeKey(){
 		return thisEntity.getKey().toString();
+	}
+
+	public void applyTie() {
+		// IF there is a wager, 
+		//must get the luduses and 'move' the wager amount from wagered gold to available gold
+		if (wager > 0){
+			if (incumbantLudus == null || challengerLudus == null){
+				findLuduses();
+			}			
+			incumbantLudus.setWager(-wager);
+			challengerLudus.setWager(-wager);
+			incumbantLudus.saveLudus();
+			challengerLudus.saveLudus();
+			log.info("refunded wagers to available gold: " + wager);
+		}
+		this.status = Status.COMPLETED;
+		
+	}
+
+	public void applyChallengerWin() {
+		// If there was a wager, add double the wager amount to the challenger and remove the wager amount from 
+		// each ludus' wagered gold
+		if (incumbantLudus == null || challengerLudus == null){
+			findLuduses();
+		}
+		if (wager > 0){
+			
+			incumbantLudus.updateWageredGold(-wager);
+			challengerLudus.setWager(-wager);
+			
+		}
+		this.status = Status.COMPLETED;
+		challengerLudus.updateAvailableGold((2 * wager) + STANDARD_WIN_AMOUNT);
+		log.info("Awarded challenger: " + wager + " and " + STANDARD_WIN_AMOUNT);
+		incumbantLudus.saveLudus();
+		challengerLudus.saveLudus();
+	}
+
+	public void applyIncumbantWin() {
+		// If there was a wager, add double the wager amount to the incumbant and remove the wager amount from 
+		// each ludus' wagered gold
+		if (incumbantLudus == null || challengerLudus == null){
+			findLuduses();
+		}
+		if (wager > 0){			
+			challengerLudus.updateWageredGold(-wager);
+			incumbantLudus.setWager(-wager);			
+		}
+		this.status = Status.COMPLETED;
+		incumbantLudus.updateAvailableGold((2 * wager) + STANDARD_WIN_AMOUNT);
+		log.info("Awarded incumbant: " + wager + " and " + STANDARD_WIN_AMOUNT);
+		incumbantLudus.saveLudus();
+		challengerLudus.saveLudus();
+
 	}
 }

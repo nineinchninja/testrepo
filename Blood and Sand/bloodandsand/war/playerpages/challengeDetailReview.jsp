@@ -8,7 +8,7 @@
 <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 <link href="/stylesheets/main.css" type="text/css" rel="stylesheet" />
-<title>Recent Results</title>
+<title>Match Description</title>
 </head>
 <body>
 <a href="/logout" class="login-link">logout</a>
@@ -18,27 +18,19 @@
 <div id="navbar"></div>
 <script>$("#navbar").load("/admin/navbar.html");</script>
 <hr>
-
-<table class="table-results">
-<c:forEach var="tournament" items="${ResultsBeanData}">
-	<tr>
-		<th class="table-header" colspan="4">Tournament held ${tournament.eventDate}</th>
+<table cellpadding="10">
+<tr>
+		<th class="table-header" colspan="3">Match held ${ResultsDetailData.matchDate}</th>
 	</tr>
 	<tr>
-		<th class="table-header">Challenger</th>
-		<th class="table-header">Incumbant</th>
-		<th class="table-header">Winner</th>	
+		<th class="table-header">${ResultsDetailData.challengerName}</th>
+		<th class="table-header">Versus</th>
+		<th class="table-header">${ResultsDetailData.incumbantName}</th>			
 	</tr>
-	<c:forEach var="match" items="${tournament.results}">
-	<form method="post" action="/results">
-		<tr>
-		<input type="hidden" name="resultKey" value="${match.resultKey}" />
-			<td >${match.challengerName}</td>
-			<td >${match.incumbantName}</td>			
-			<td >${match.winner}</td>	
-			<td><input class="otherbutton" type="submit" value="View Details"/></td>			
-		</tr>
-		</form>
-	</c:forEach>
+	<tr>
+		<td colspan="3" class="match-detail" cellpadding="20">${ResultsDetailData.fightDescription}</td>
+	</tr>
 	
-</c:forEach></table>
+</table>
+</body>
+</html>

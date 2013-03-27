@@ -5,6 +5,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 <link href="/stylesheets/main.css" type="text/css" rel="stylesheet" />
 <title>Training</title>
@@ -13,17 +14,12 @@
 <a href="/logout" class="login-link">logout</a>
 <span class="main-title">Your Training Centre</span>
 <hr>
-<table class="table-navigation">
-<tr>
-<td><a href="/login" class="navigation-link">Home</a></td>
-<td><a href="/gladiatormarket" class="navigation-link">Buy new gladiators</a></td>
-<td><a href="/gladiatortraining" class="navigation-link">Train and manage your gladiators</td>
-<td><a href="/challenges" class="navigation-link">Arrange fights</a></td>
-<td><a href="/results" class="navigation-link">Recent Results</a></td>
-</tr>
-</table>
+
+<div id="navbar"></div>
+<script>$("#navbar").load("/admin/navbar.html");</script>
 <hr>
-<table class="table-results">
+<h1>Attributes</h1>
+<table class="table-results" caption="Attributes">
 <tr>
 	<th class="table-header">Name</th>
 	<th class="table-header">Strength</th>
@@ -32,33 +28,49 @@
 	<th class="table-header">Intelligence</th>
 	<th class="table-header">Constitution</th>
 	<th class="table-header">Willpower</th>
-	<th class="table-header">Sword</th>
-	<th class="table-header">Great Sword</th>
-	<th class="table-header">Great Axe</th>
-	<th class="table-header">Daggers</th>
-	<th class="table-header">Spear</th>
-	<th class="table-header">Quarterstaff</th>
-	<th class="table-header">Maul</th>
 </tr>
 <c:forEach var="gladiator" items='${UserData.ludus.gladiators}'>
-<tr class="table-results">	
-	<td ><c:out value='${gladiator.name}' /></td>
-	<td ><c:out value='${gladiator.strength}' /></td>
-	<td ><c:out value='${gladiator.agility}' /></td>
-	<td ><c:out value='${gladiator.speed}' /></td>
-	<td ><c:out value='${gladiator.intelligence}' /></td>
-	<td ><c:out value='${gladiator.constitution}' /></td>
-	<td ><c:out value='${gladiator.willpower}' /></td>
-	<td ><c:out value='${gladiator.weaponSkills.sword}' /></td>	
-	<td ><c:out value='${gladiator.weaponSkills.greatsword}'></c:out></td>	
-	<td><c:out value="${gladiator.weaponSkills.greataxe}"></c:out></td>
-	<td><c:out value="${gladiator.weaponSkills.daggers}"></c:out></td>
-	<td><c:out value="${gladiator.weaponSkills.spear}"></c:out></td>
-	<td><c:out value="${gladiator.weaponSkills.quarterstaff}"></c:out></td>
-	<td><c:out value="${gladiator.weaponSkills.maul}"></c:out></td></tr>
-</c:forEach></table>
+	<tr class="table-results">	
+		<td ><c:out value='${gladiator.capitalizedName}' /></td>
+		<td ><c:out value='${gladiator.strengthString}' /></td>
+		<td ><c:out value='${gladiator.agilityString}' /></td>
+		<td ><c:out value='${gladiator.speedString}' /></td>
+		<td ><c:out value='${gladiator.intelligenceString}' /></td>
+		<td ><c:out value='${gladiator.constitutionString}' /></td>
+		<td ><c:out value='${gladiator.willpowerString}' /></td>
+	</tr>
+</c:forEach>
+</table>
+<hr>
+<h1>Weapon Skills</h1>
+<table class="table-results" caption="Weapon Skills">
+	<tr>
+		<th class="table-header">Name</th>
+		<th class="table-header">Sword</th>
+		<th class="table-header">Great Sword</th>
+		<th class="table-header">Great Axe</th>
+		<th class="table-header">Daggers</th>
+		<th class="table-header">Spear</th>
+		<th class="table-header">Quarterstaff</th>
+		<th class="table-header">Maul</th>
+	</tr>
+<c:forEach var="gladiator" items='${UserData.ludus.gladiators}'>
+	<tr class="table-results">
+		<td ><c:out value='${gladiator.capitalizedName}'/></td>
+
+		<td ><c:out value='${gladiator.weaponSkills.swordString}' /></td>	
+		<td ><c:out value='${gladiator.weaponSkills.greatswordString}'/></td>	
+		<td><c:out value="${gladiator.weaponSkills.greataxeString}"/></td>
+		<td><c:out value="${gladiator.weaponSkills.daggersString}"/></td>
+		<td><c:out value="${gladiator.weaponSkills.spearString}"/></td>
+		<td><c:out value="${gladiator.weaponSkills.quarterstaffString}"/></td>
+		<td><c:out value="${gladiator.weaponSkills.maulString}"/></td>
+	</tr>
+</c:forEach>
+</table>
 <br>
 <hr>
+<h1>Training Assignments</h1>
 <form method="post" action="/gladiatortraining">
 <table class="table-results">
 	<tr>
@@ -72,7 +84,7 @@
 	
 	<tr>	
 		<input type="hidden" name="gladKey" value="${gladiator.key}" />
-		<td><c:out value="${gladiator.name}" /></td>
+		<td><c:out value="${gladiator.capitalizedName}" /></td>
 		<td><c:out value="${gladiator.currentTrainingFocus }" /></td>
 		<td><c:out value="${gladiator.lastTrainingChangeDate}" /></td>
 		<td><select name="${gladiator.key}">

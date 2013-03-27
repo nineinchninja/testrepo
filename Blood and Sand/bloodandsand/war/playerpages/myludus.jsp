@@ -7,6 +7,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 
 <title>My Ludus</title>
@@ -17,16 +18,9 @@
 <a href="/logout" class="login-link">logout</a>
 <span class="main-title">${capitalizedName}'s School of Gladiators</span>
 <hr>
-<table class="table-navigation">
-<tr>
-	<td><a href="/login" class="navigation-link">Home</a></td>
-	<td><a href="/gladiatormarket" class="navigation-link">Buy new gladiators</a></td>
-	
-	<td><a href="/gladiatortraining" class="navigation-link">Train and manage your gladiators</td>
-	<td><a href="/challenges" class="navigation-link">Arrange fights</a></td>
-	<td><a href="/results" class="navigation-link">Recent Results</a></td>
-</tr>
-</table>
+
+<div id="navbar"></div>
+<script>$("#navbar").load("/admin/navbar.html");</script>
 <h2>The status of your gladiator business:</h2>
 <h3>Finances: </h3>
 <br />Total gold available: <c:out value='${UserData.ludus.availableGold}' />
@@ -60,10 +54,10 @@
 <td >
 	<c:choose>
 		<c:when test="${gladiator.name == none}">
-		<input type="text" name='${gladiator.key}' placeholder="Enter a name and hit enter"/>
+		<input class="default" type="text" name='${gladiator.key}' placeholder="Enter a name and hit enter"/>
 		</c:when>
 		<c:otherwise>
-			<c:out value='${gladiator.name}' />
+			<c:out value='${gladiator.capitalizedName}' />
 		</c:otherwise>
 	</c:choose>
 </td>

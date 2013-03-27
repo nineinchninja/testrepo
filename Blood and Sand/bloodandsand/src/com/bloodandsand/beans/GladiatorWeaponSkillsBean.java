@@ -6,12 +6,9 @@ package com.bloodandsand.beans;
 import java.util.logging.Logger;
 
 import com.bloodandsand.utilities.CoreBean;
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
+
 import com.google.appengine.api.datastore.EmbeddedEntity;
-import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.Query;
+
 /**
  * @author dewie
  * Feb 20 2013
@@ -79,6 +76,10 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 	public long getSword() {
 		return sword;
 	}
+	
+	public String getSwordString(){
+		return getAttributeRating(sword);
+	}
 
 	public void setSword(long sword) {
 		this.sword = sword;
@@ -92,6 +93,10 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 
 	public long getDaggers() {
 		return daggers;
+	}
+	
+	public String getDaggersString(){
+		return getAttributeRating(daggers);
 	}
 
 	public void setDaggers(long daggers) {
@@ -107,6 +112,10 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 	public long getGreatsword() {
 		return greatsword;
 	}
+	
+	public String getGreatswordString(){
+		return getAttributeRating(greatsword);
+	}
 
 	public void setGreatsword(long greatsword) {
 		this.greatsword = greatsword;
@@ -120,6 +129,10 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 
 	public long getGreataxe() {
 		return greataxe;
+	}
+	
+	public String getGreataxeString(){
+		return getAttributeRating(greataxe);
 	}
 
 	public void setGreataxe(long greataxe) {
@@ -135,6 +148,10 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 	public long getSpear() {
 		return spear;
 	}
+	
+	public String getSpearString(){
+		return getAttributeRating(spear);
+	}
 
 	public void setSpear(long spear) {
 		this.spear = spear;
@@ -148,6 +165,10 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 
 	public long getQuarterstaff() {
 		return quarterstaff;
+	}
+	
+	public String getQuarterstaffString(){
+		return getAttributeRating(quarterstaff);
 	}
 
 	public void setQuarterstaff(long quarterstaff) {
@@ -163,6 +184,10 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 	public long getMaul() {
 		return maul;
 	}
+	
+	public String getMaulString(){
+		return getAttributeRating(maul);
+	}
 
 	public void setMaul(long maul) {
 		this.maul = maul;
@@ -177,6 +202,10 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 	public long getHandToHand() {
 		return handToHand;
 	}
+	
+	public String getHandtoHandString(){
+		return getAttributeRating(handToHand);
+	}
 
 	public void setHandToHand(long handToHand) {
 		this.handToHand = handToHand;
@@ -187,7 +216,5 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 		this.handToHand += TRAINING_INCREMENT_AMOUNT;
 		thisEntity.setProperty("handToHand", handToHand);
 	}
-
-
 
 }

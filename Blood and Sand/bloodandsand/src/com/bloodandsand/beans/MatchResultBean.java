@@ -5,9 +5,6 @@
 package com.bloodandsand.beans;
 
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.logging.Logger;
 
@@ -16,10 +13,9 @@ import com.bloodandsand.utilities.CoreBean;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Transaction;
-import com.google.appengine.labs.repackaged.com.google.common.collect.ArrayTable;
 import com.google.appengine.api.datastore.Text;
 
 public class MatchResultBean extends CoreBean implements java.io.Serializable {
@@ -51,6 +47,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 	private String fightDescription;
 	
 	private Entity thisEntity = new Entity(matchResultEntity);
+	private Key resultKey;
 	
 	public MatchResultBean(Entity e){
 		thisEntity = e;
@@ -65,8 +62,8 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 		this.challengerKey = challenger.getDataStoreKey();
 		this.incumbantKey = incumbant.getDataStoreKey();
 		
-		this.challengerName = challenger.getName();
-		this.incumbantName = incumbant.getName();
+		this.challengerName = challenger.getCapitalizedName();
+		this.incumbantName = incumbant.getCapitalizedName();
 		
 		this.challengerWeapon = challengerWeapon;
 		this.incumbantWeapon = incumbantWeapon;
@@ -82,6 +79,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 		winner = "";
 
 		setUpEntity();
+		resultKey = thisEntity.getKey();
 	}
 	
 	public void describeMatchStart() {
@@ -101,6 +99,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 		fightDescription = ((Text) this.thisEntity.getProperty("fightDescription")).getValue();
 		round = (Long) this.thisEntity.getProperty("totalRounds");	
 		winner = (String) this.thisEntity.getProperty("winner");
+		resultKey = this.thisEntity.getKey();
 	}
 	
 	private void setUpEntity(){
@@ -114,6 +113,10 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 		this.thisEntity.setProperty("fightDescription", new Text(fightDescription));
 		this.thisEntity.setProperty("totalRounds", round);	
 		this.thisEntity.setProperty("winner", winner);
+	}
+	
+	public String getResultKey(){
+		return KeyFactory.keyToString(this.resultKey);
 	}
 	
 	public GladiatorDataBean getChallenger() {
@@ -133,7 +136,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 	}
 
 	public String getIncumbantName() {
-		return incumbantName;
+		return capitalizeWord(incumbantName);
 	}
 
 	public void setIncumbantName(String incumbantName) {
@@ -142,7 +145,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 	}
 
 	public String getChallengerName() {
-		return challengerName;
+		return capitalizeWord(challengerName);
 	}
 
 	public void setChallengerName(String challengerName) {
@@ -249,7 +252,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 	}
 	
 	public String getWinner(){
-		return this.winner;
+		return capitalizeWord(this.winner);
 	}
 
 	public void recordHit(String fighterName) {

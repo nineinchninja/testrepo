@@ -101,7 +101,7 @@ public class LudusDataBean extends CoreBean implements java.io.Serializable{
 		} finally {
 		    if (txn.isActive()) {
 		        txn.rollback();
-		        log.warning("LudusDataBean.java: Gold transaction failed: rolled back");
+		        log.warning("LudusDataBean.java: save transaction failed: rolled back");
 		    }
 		}
 	}
@@ -131,5 +131,21 @@ public class LudusDataBean extends CoreBean implements java.io.Serializable{
 			return avail;
 		}
 		
+	}
+	public void setWager(long wager) {
+		// adds the wagered amount to the wagered gold stat and removes it from the available gold stat
+		this.availableGold -= wager;
+		this.wageredGold += wager;
+		
+		thisEntity.setProperty("availableGold", availableGold);
+		thisEntity.setProperty("wageredGold", wageredGold);
+		//note that sending a negative value reverses this.
+		log.info("wager set: " + wager);
+		
+	}
+	public void updateWageredGold(long wager) {
+		// after winning or losing this is updated
+		wageredGold += wager;
+		thisEntity.setProperty("wageredGold", wageredGold);		
 	}
 }

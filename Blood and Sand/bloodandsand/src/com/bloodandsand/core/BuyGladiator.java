@@ -72,6 +72,7 @@ public class BuyGladiator extends BaseServlet{
 									selected.setNewOwner((String)req.getSession().getAttribute("username"), (String)usr.getDataStoreKey());//with the added key string it is saved to the datastore
 									usr.ludus.addNewGladiator(selected);//update the client so as to show the new gladiator when returning to home page
 									usr.ludus.updateAvailableGold(-(selected.getPrice()));
+									usr.ludus.saveLudus();
 									req.getSession().setAttribute(userBeanData, usr);
 									req.getSession().setAttribute(userDataRefresh, System.currentTimeMillis());
 									resp.sendRedirect(loginRedirect);

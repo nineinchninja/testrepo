@@ -59,6 +59,7 @@ public class BaseServlet extends HttpServlet {
 	
 	protected static String challengeReviewJsp = "/playerpages/challengeReview.jsp";
 	protected static String challengeCreateJsp = "/playerpages/challengeCreate.jsp";
+	protected static String challengeDetailReviewJsp = "/playerpages/challengeDetailReview.jsp";
 	
 	protected static String matchResultsJsp = "/playerpages/matchResults.jsp";
 	
@@ -66,10 +67,11 @@ public class BaseServlet extends HttpServlet {
 	
 	protected static String userBeanData = "UserData";
 	protected static String resultsBeanData = "ResultsBeanData";
+	protected static String resultsDetail = "ResultsDetailData";
 	
 	protected static long USER_DATA_REFRESH_TIME = 600000;
 	
-	protected static int MAX_GLADIATORS_ALLOWED = 5;
+	protected static int MAX_GLADIATORS_ALLOWED = 10;
 	
 	protected static int MAX_TOURNAMENTS = 5; //limit for query on existing tournaments
 	
@@ -77,6 +79,7 @@ public class BaseServlet extends HttpServlet {
 
 	protected static String challengeEntity = "Challenge";
 	protected static String tournamentEntity = "Tournament";
+	protected static String gladiatorEntity = "Gladiator";	
 	
 	
 	protected static final Logger log = Logger.getLogger(BaseServlet.class.getName());
@@ -116,6 +119,23 @@ public class BaseServlet extends HttpServlet {
 		return out;	
 	}
 	
+	protected boolean uniqueGladiatorName(String gladName){//checks to ensure the name is available for the gladiator
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+			
+		Query q = new Query(gladiatorEntity);
+        q.isKeysOnly();
+        q.setFilter(new FilterPredicate ("name", FilterOperator.EQUAL, gladName.toLowerCase()));
+    	FetchOptions username_search =
+    		    FetchOptions.Builder.withLimit(5);
+        int results = datastore.prepare(q).countEntities(username_search);
+        if (results > 0){
+        	return false;
+        } else {
+        	return true;
+        }
+	}
+
+	
 	public String getNextTournamentDate(){
 		Query tourneys = new Query(tournamentEntity);
 		tourneys.addProjection(new PropertyProjection("eventDate", Date.class));
@@ -133,13 +153,7 @@ public class BaseServlet extends HttpServlet {
 			return df.format(event);
 		} else {
 			return "No tournament scheduled";
-		}
-		
-		
-		
-		
-		
-		
+		}	
 	}
 
 	//Session methods - creating and setting variables
@@ -242,9 +256,8 @@ public class BaseServlet extends HttpServlet {
 			resp.addCookie(cookies[i]);
 			found = true;
 			}
-			}
-		return found;
-		
+		}
+		return found;		
 	}
 	//used in creating secure cookies
 	private String getSecureValue(String value) throws UnsupportedEncodingException {
@@ -279,8 +292,19 @@ public class BaseServlet extends HttpServlet {
 			return false;
 		} else {
 			return true;
-		}
+		}		
+	}	
+	
+	public long getLongFromString(String s){
+		//attempt to get a long value from a string. Return null if failed
 		
-	}		
-
+		try {
+	         long l = Long.parseLong(s);
+	         log.info("long l = " + l);
+	         return l;
+	      } catch (NumberFormatException nfe) {
+	         log.info("NumberFormatException: " + nfe.getMessage());
+	         return 0;
+	      }
+	}
 }

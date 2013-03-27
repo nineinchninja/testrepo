@@ -62,13 +62,19 @@ public class ApplyName extends BaseServlet {
 					gladlist.add(gbean);
 					String newName = req.getParameter(gbean.getKey());
 					
-					if ( newName != null && newName.length() >= 4 && checkValidCharacters(newName) && newName.length() < 14){						
-						log.info("New name passes muster and should be: " + newName);						
-						gbean.setName(newName);
-						gbean.saveGladiator();
-						changed = true;						
-					} else {
-						nameError = "Invalid name. Names should be between 4 and 14 characters and contain no special characters";
+					if ( newName != null && newName.length() >= 4 && checkValidCharacters(newName) && newName.length() < 20){
+						if (uniqueGladiatorName(newName)){
+							log.info("New name passes muster and should be: " + newName);						
+							gbean.setName(newName);
+							gbean.saveGladiator();
+							changed = true;	
+						} else {
+							//gladiator name not unique
+							nameError = "Sorry. That name is already in use.";
+							req.getSession().setAttribute("nameError", nameError);
+						}											
+					} else {//gladiator name invalid
+						nameError = "Invalid name. Names should be between 4 and 20 characters and contain no special characters or spaces.";
 						req.getSession().setAttribute("nameError", nameError);
 					}
 				}

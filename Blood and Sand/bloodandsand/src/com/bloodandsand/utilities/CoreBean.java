@@ -1,8 +1,4 @@
 package com.bloodandsand.utilities;
-import java.util.List;
-import java.util.Set;
-
-import com.bloodandsand.beans.GladiatorChallengeBean;
 
 public abstract class CoreBean {
 	
@@ -35,9 +31,37 @@ public abstract class CoreBean {
 	protected static String[] ATTRIBUTES = {"strength", "agility", "speed", "intelligence", "constitution", "willpower"};
 	protected static String[] WEAPONSKILLS = {"sword", "daggers", "greataxe", "greatsword", "maul", "spear", "hand to hand", "quarterstaff", };
 	
-	public enum Status {INITIATED, ACCEPTED, DECLINED, EXPIRED, CANCELED};	
+	protected static String[]  ATTRIBUTE_DESCRIPTION = { "Untrained", "Very Poor", "Poor", "Below Average", "Average",
+														"Above Average", "Good", "Very Good", "Excellent", "Outstanding", "Maximum"};
 	
-	protected int tournamentFrequency = 48 ;//hours between scheduled tournaments
-	protected static int MAX_TOURNAMENTS = 5; //limit for query on existing tournaments
+	protected static int[]  ATTRIBUTE_RATING = { 5, 9, 14, 19, 24, 
+												29, 34, 39, 44, 48, 50};
+	
+	
+	public enum Status {INITIATED, ACCEPTED, DECLINED, EXPIRED, COMPLETED, CANCELED};	
+	
+	public static int STANDARD_WIN_AMOUNT = 10; //the amount that a gladiator wins for winning a fight, regardless of wager
+	
+	protected int tournamentFrequency = 24 ;//hours between scheduled tournaments
+	protected static int MAX_TOURNAMENTS = 1; //limit for query on existing tournaments
 
+	
+	protected String getAttributeRating(long score){
+		String description = "";
+		for (int i = 0; i<ATTRIBUTE_RATING.length; i++){
+			description = ATTRIBUTE_DESCRIPTION[i];
+			if (score <= ATTRIBUTE_RATING[i]){				
+				i = ATTRIBUTE_RATING.length;
+			}
+		}
+		return description;
+	}
+	
+	public String capitalizeWord(String s){
+		
+		String capital   = Character.toString(s.charAt(0)).toUpperCase();
+		return capital + s.substring(1);
+	}
+	
+	
 }

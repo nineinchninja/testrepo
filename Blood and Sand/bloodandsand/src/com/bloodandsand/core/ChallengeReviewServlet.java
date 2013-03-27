@@ -18,6 +18,7 @@ import com.bloodandsand.beans.GladiatorChallengeBean;
 import com.bloodandsand.beans.GladiatorDataBean;
 import com.bloodandsand.beans.UserDataBean;
 import com.bloodandsand.utilities.BaseServlet;
+import com.google.appengine.api.datastore.EntityNotFoundException;
 
 /**
  * @author dewie
@@ -35,7 +36,7 @@ public class ChallengeReviewServlet extends BaseServlet {
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 		      throws IOException, ServletException {
 		//check for login status and bean
-		HttpSession sess = req.getSession();
+		//HttpSession sess = req.getSession();
 		if (!checkLogin(req) || req.getSession().getAttribute(userBeanData) == null){			
 			resp.sendRedirect(loginPage);
 		} else {
@@ -49,7 +50,7 @@ public class ChallengeReviewServlet extends BaseServlet {
 	}
 	
 	public void doPost (HttpServletRequest req, HttpServletResponse resp)
-		      throws IOException, ServletException {
+		      throws IOException, ServletException {//this is the process of accepting a challenge, effectively putting your gladiator as the incumbant
 		HttpSession sess = req.getSession();
 		if (!checkLogin(req) || sess.getAttribute(userBeanData) == null){			
 			resp.sendRedirect(loginPage);
@@ -60,6 +61,7 @@ public class ChallengeReviewServlet extends BaseServlet {
 			usr = (UserDataBean) sess.getAttribute(userBeanData);
 			String acceptedChallenge = "";
 			boolean accpted = false;
+			boolean enoughGold = false;
 			//get the challenge accepted
 			acceptedChallenge = req.getParameter("accepted");
 
@@ -77,24 +79,33 @@ public class ChallengeReviewServlet extends BaseServlet {
 					} else {
 						for (GladiatorChallengeBean challnge: challs ){
 							if (challnge.getGladiatorChallengeKey().equals(acceptedChallenge)){
-								accpted = challnge.acceptChallenge();
+								if (challnge.getWager() <= usr.ludus.getAvailableGold()){
+									enoughGold = true;
+									
+										accpted = challnge.acceptChallenge();
+									
+									usr.ludus.setWager(challnge.getWager());
+									usr.ludus.saveLudus();
+								}								
 							}
 						}
 					}					
 				}
-				if (!accpted){
-					write_line(req, resp, "That gladiator has already accepted another challenge");
-					log.info("Challenge not accepted due to gladiator not being available");
+				if (!enoughGold){
+					write_line(req, resp, "You do not have enough gold to accept that challenge");
+					log.info("Challenge not accepted due to lack of funds");
 				} else {
-					usr.populateUserDataBean(usr.getUserName());
-					sess.setAttribute(userBeanData, usr);
-					RequestDispatcher rd = req.getRequestDispatcher(challengeReviewJsp);
-					rd.forward(req, resp);
-				}
-				
+					if (!accpted){
+						write_line(req, resp, "That gladiator has already accepted another challenge");
+						log.info("Challenge not accepted due to gladiator not being available");
+					} else {
+						usr.populateUserDataBean(usr.getUserName());
+						sess.setAttribute(userBeanData, usr);
+						RequestDispatcher rd = req.getRequestDispatcher(challengeReviewJsp);
+						rd.forward(req, resp);
+					}
+				}				
 			}		
-		}	
-		//
-	}
-	
+		}			//
+	}	
 }

@@ -2,7 +2,6 @@ package com.bloodandsand.core;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -67,13 +66,15 @@ public class CreateChallengeServlet extends BaseServlet {
 			List<GladiatorDataBean> opponents = new ArrayList<GladiatorDataBean>();
 			String opponent = "";
 			String challenger = "";
+			long wager = 0;
 			GladiatorDataBean challengerBean = null;
 			GladiatorDataBean opponentBean = null;
-			boolean repeat = true;
 			usr = (UserDataBean) sess.getAttribute(userBeanData);
 			opponents = (List<GladiatorDataBean>) sess.getAttribute("Opponents");			
 			opponent = req.getParameter("opponent");
 			challenger = req.getParameter("challenger");
+			wager = getLongFromString(req.getParameter("wagerAmount"));
+			log.info("wager amount received: " + wager);
 			if (opponent == null || challenger == null ||
 					opponents == null || usr == null){
 				write_line(req, resp, "Your request could not be processed at this time. Please try again later.");
@@ -81,13 +82,13 @@ public class CreateChallengeServlet extends BaseServlet {
 			} else {
 				//need to match the challenger selected with the gladiators in the ludus, and ensure it is still available
 				for (GladiatorDataBean gladitr : usr.ludus.gladiators){
-					if (gladitr.getName().equals((challenger))){
+					if (gladitr.getName().equalsIgnoreCase((challenger))){
 						challengerBean = gladitr;
 					}
 				}
 				//need to find the opponent in the list of opponents
 				for (GladiatorDataBean gladitr : opponents){
-					if (gladitr.getName().equals((opponent))){
+					if (gladitr.getName().equalsIgnoreCase((opponent))){
 						opponentBean = gladitr;
 					}
 				}
@@ -99,19 +100,26 @@ public class CreateChallengeServlet extends BaseServlet {
 					log.info("Challenger or opponent bean was null when trying to create a new challenge");
 				} else {
 					//need to create the challenge
-					GladiatorChallengeBean chall = new GladiatorChallengeBean(challengerBean, opponentBean, (long) 0);
 					
-					chall.saveNewChallenge();
-					log.info("Challenge saved");
-					//need to update the user data bean and db with new stuff
-					usr.populateUserDataBean(usr.getUserName());
-					sess.setAttribute(userBeanData, usr);
-					RequestDispatcher rd = req.getRequestDispatcher(challengeReviewJsp);
-					rd.forward(req, resp);
-				}
-				
-			}
+					if (wager > usr.ludus.getAvailableGold()){						
+							write_line(req, resp, "You do not have enough gold to wager that amount.");
+						} else {
+							GladiatorChallengeBean chall = new GladiatorChallengeBean(challengerBean, opponentBean, wager);
+							//TODO: set challenger's ludus in the challenge
+							usr.ludus.setWager(wager);
+							usr.ludus.saveLudus();
+							
+							chall.saveNewChallenge();
+							log.info("Challenge saved");
+							//need to update the user data bean and db with new stuff
+							usr.populateUserDataBean(usr.getUserName());
+							sess.setAttribute(userBeanData, usr);
+							RequestDispatcher rd = req.getRequestDispatcher(challengeReviewJsp);
+							rd.forward(req, resp);
+						}						
+					}					
 			
+			}			
 		}
 	}
 

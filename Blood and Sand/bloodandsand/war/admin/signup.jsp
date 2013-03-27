@@ -19,7 +19,7 @@
 <table align="center">
 <tr>
 	<td><label>Choose a User Name</td>
-		<td><input type="text" name="username" value="<c:out value='${username}'/>"autofocus="autofocus">
+		<td><input class="default" type="text" name="username" value="<c:out value='${username}'/>"autofocus="autofocus">
 	</label></td>
     <td><label style="color: red"><c:out value='${errorMessageName}' /></label></td>
 </tr>
@@ -36,7 +36,7 @@
 </tr>
 <tr>
 <td><label>Email address</td>
-<td><input type="text" name = "email" value="<c:out value='${emailAddress}' />">
+<td><input class="default" type="text" name = "email" value="<c:out value='${emailAddress}' />">
 	</label></td>
 	<td><label style="color: red"><c:out value='${errorMessageEmail}' /></label></td>
 </tr>

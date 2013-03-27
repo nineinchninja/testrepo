@@ -18,7 +18,7 @@
 <table align="center">
 <tr>
 	<td><label>Username</td>
-		<td><input type="text" name="username" value="<c:out value='${username}' />" autofocus="autofocus">
+		<td><input class="default" type="text" name="username" value="<c:out value='${username}' />"  autofocus="autofocus">
 	</label></td>
 </tr>
 <tr>
