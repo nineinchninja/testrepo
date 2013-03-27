@@ -65,6 +65,14 @@ h3 {
     border: 2px solid gray;
     border-collapse:collapse;
 }
+.stripedtable{
+	text-align:center;
+	width:98%;
+	border:2;
+}
+tr.alt td{
+	background: white;
+}
 
 .match-detail{
 	white-space: pre-wrap;

@@ -14,7 +14,14 @@ import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
+import com.google.appengine.api.datastore.Query.Filter;
+import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.datastore.Transaction;
+import com.google.appengine.api.datastore.Query.FilterOperator;
+import com.google.appengine.api.datastore.Query.FilterPredicate;
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
 
 public class TournamentDataBean extends CoreBean implements java.io.Serializable {
 	
@@ -93,7 +100,7 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 					
 				} else {//if the challenge is expired, it needs to have the wager refunded
 					if (!TESTTOGGLE && bean.getStatusEnum().equals(Status.INITIATED)){//test togglemakes it possible to run the tournament multiple times 
-						bean.setStatus(Status.EXPIRED);						
+						bean.expireChallenge();						
 					}
 				} //else
 				bean.saveChallenge();			
@@ -211,5 +218,43 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 	public void setStatus(String status){
 		this.status = status;
 		thisEntity.setProperty("status", this.status);
+	}
+
+	public void createRankings() {//creates a new ranking list and puts it in memcache
+		// get all alive and owned gladiators
+		// sort by rating descending
+		// put the list in memcache
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		
+		Query q = new Query(gladiatorEntity).addSort("status", SortDirection.DESCENDING);
+		q.addSort("rating", SortDirection.DESCENDING);
+		
+		List<GladiatorDataBean> gladiators = new ArrayList<GladiatorDataBean>();
+
+        Filter alive = new FilterPredicate ("status", FilterOperator.NOT_EQUAL, "DEAD");
+        //Filter unowned = new FilterPredicate("owner", FilterOperator.NOT_EQUAL, null);
+        
+        //Filter rankableGladiators = CompositeFilterOperator.and(unowned, alive);
+        q.setFilter(alive);
+        FetchOptions options = FetchOptions.Builder.withChunkSize(200);
+        
+        PreparedQuery preparedQuery = datastore.prepare(q);
+        if (preparedQuery.countEntities(options) > 0){
+        	
+            log.info("Found " + preparedQuery.countEntities(options) + " gladiators for rankings"); 
+            for (Entity gladiator : preparedQuery.asIterable(options)){
+            	GladiatorDataBean bean = new GladiatorDataBean(gladiator);
+            	if (bean.getOwner() != null && !bean.getOwner().equalsIgnoreCase("None") || bean.getMatches() > 0){
+            		gladiators.add(bean);
+            	}
+            }
+            
+            if (gladiators.size() > 0){
+            	MemcacheService asyncCache = MemcacheServiceFactory.getMemcacheService();
+            	asyncCache.put(rankingsKey, gladiators);
+            }
+        } else {
+        	log.warning("Found no gladiators for rankings"); 
+        }		
 	}	
 }

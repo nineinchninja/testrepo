@@ -89,6 +89,7 @@ public class GladiatorCombat extends BaseServlet{
 	
 	boolean hit = false;//used to determine whether damage needs to be assessed
 	boolean combatComplete;//test boolean used to end the while-loop
+	boolean ranTournament = false;
 	long round;//tracks the number of 6 second turns in the combat
 	GladiatorChallengeBean currentMatch;
 	String roundDescription;
@@ -170,11 +171,18 @@ public class GladiatorCombat extends BaseServlet{
 			log.info("Total elapsed time: " + (endTime - startTime));
 			log.info("Total time for matches: " + (endTime - startMatchesTime));
 			
+			tournament.createRankings();
+			
 			TournamentDataBean nextTourney = new TournamentDataBean();
 			nextTourney.saveTournament();
 			
 		} else {
 			log.info("GladiatorCombat.java - no tournament to run");
+			tournament.createRankings();
+			if (ranTournament){//ran the tournament, set it to completed, even though there were no matches, so a new tournament is needed
+				TournamentDataBean nextTourney = new TournamentDataBean();
+				nextTourney.saveTournament();
+			}			
 		}				
 	}	
 	
@@ -311,14 +319,18 @@ public class GladiatorCombat extends BaseServlet{
 	
 	private void closeMatch(GladiatorChallengeBean match) {
 		//update the total matches for each gladiator:
-		
 		// declare the winner
+		//update ratings for the gladiators
+		
+		//first store their current ratings
+		long challengerRating = challenger.gldtr.getRating();
+		long incumbantRating = incumbant.gldtr.getRating();
 		if (challenger.status.equals("Dead") || challenger.status.equals("Concedes") ){
 			//incumbant wins
-			incumbant.gldtr.addWin(); //adds a match to the total and increments total matches
+			incumbant.gldtr.addWin(challengerRating); //adds a match to the total and increments total matches
 			match.applyIncumbantWin(); //awards the wager, if any, plus standard win amount
 			log.info(incumbant.fighterName + " declared winner!");
-			challenger.gldtr.addLoss();
+			challenger.gldtr.addLoss(incumbantRating);
 			results_bean.setWinner(incumbant.fighterName);			
 			if (challenger.status.equals("Dead")){
 				challenger.gldtr.setStatus("DEAD");
@@ -326,9 +338,9 @@ public class GladiatorCombat extends BaseServlet{
 		} else {
 			if ( incumbant.status.equals("Dead") || incumbant.status.equals("Concedes") ){
 				//challenger wins
-				challenger.gldtr.addWin(); //adds a match to the total and increments total matches
+				challenger.gldtr.addWin(incumbantRating); //adds a match to the total and increments total matches
 				match.applyChallengerWin();//awards the challenger with the standard amount for winning plus any wager
-				incumbant.gldtr.addLoss();
+				incumbant.gldtr.addLoss(challengerRating);
 				log.info(challenger.fighterName + " declared winner!");
 				results_bean.setWinner(challenger.fighterName);				
 				if (incumbant.status.equals("Dead")){
@@ -336,13 +348,14 @@ public class GladiatorCombat extends BaseServlet{
 				}
 			} else {
 				//tie
-				challenger.gldtr.addTie();				
-				incumbant.gldtr.addTie();
+				challenger.gldtr.addTie(incumbantRating);				
+				incumbant.gldtr.addTie(challengerRating);
 				match.applyTie();//restores the wagered gold to available gold for each ludus
 				results_bean.setWinner("Tie");
 				log.info("Match declared a draw");
 			}
 		}
+		
 		//store all data
 		if (!TESTTOGGLE){
 			match.saveChallenge();
@@ -371,12 +384,13 @@ public class GladiatorCombat extends BaseServlet{
 		//}
 		if (tournament.checkTournamentDate()){
 			log.info("tournament scheduled for today");
+			ranTournament = true;
 			for (GladiatorChallengeBean match: tournament.executeTournament()){
 				matches.add(match);
 			} 
 			log.info("GladiatorCombat - total matches for tournament= " + matches.size());
 		} else {
-			//log.info("tournament date not equal to today, no tournament run");
+			log.info("tournament date not equal to today, no tournament run");
 		}
 	}
 		

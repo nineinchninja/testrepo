@@ -238,9 +238,12 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		}		
 	}
 
-	public void expireChallenge() throws EntityNotFoundException{
+	public void expireChallenge() {
 		status = Status.EXPIRED;
-		refundWager();
+		if (wager > 0){
+			refundWager();
+		}
+
 		thisEntity.setProperty("status",this.status.toString());
 	}
 	
@@ -286,6 +289,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 			} 
 			challengerLudus.setWager(-(this.wager));
 			challengerLudus.saveLudus();
+			log.info("refunded wager of : " + wager);
 			//
 
 		}

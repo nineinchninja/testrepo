@@ -69,6 +69,8 @@ public class BaseServlet extends HttpServlet {
 	protected static String resultsBeanData = "ResultsBeanData";
 	protected static String resultsDetail = "ResultsDetailData";
 	
+	protected static String rankingsKey = "RANKINGS";
+	
 	protected static long USER_DATA_REFRESH_TIME = 600000;
 	
 	protected static int MAX_GLADIATORS_ALLOWED = 10;
@@ -158,15 +160,7 @@ public class BaseServlet extends HttpServlet {
 
 	//Session methods - creating and setting variables
 	//    default session timeout period is 1 hour
-	protected void checkDataFreshness(HttpSession sess){
-		if ((System.currentTimeMillis() - (Long)sess.getAttribute(userDataRefresh)) > USER_DATA_REFRESH_TIME ){
-			UserDataBean refreshed = (UserDataBean) sess.getAttribute(userBeanData);
-			refreshed.populateUserDataBean(refreshed.getUserName());
-			sess.setAttribute(userBeanData, refreshed);
-			log.info("User Data Refreshed");
-		}	
-	}	
-	
+
 	//Cookie functions
 	// get a cookie value from the cookies array passed, set secure cookies using a basic hashing mechanism
 	// check a value against the hashing to ensure it is secure

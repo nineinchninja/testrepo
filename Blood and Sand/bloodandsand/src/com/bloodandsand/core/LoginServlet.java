@@ -9,12 +9,19 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 
+import com.bloodandsand.beans.GladiatorDataBean;
 import com.bloodandsand.beans.UserDataBean;
 import com.bloodandsand.utilities.*;
+import com.google.appengine.api.memcache.ErrorHandlers;
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
 
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
 
 
 /**
@@ -39,7 +46,7 @@ public class LoginServlet extends BaseServlet {
 		//if no, redirect to login.html
 		
 		if (checkLogin(req) && req.getSession().getAttribute(userBeanData) != null){
-			checkDataFreshness(req.getSession());
+			refreshUserBean(req);
 			//resp.sendRedirect(loggedInRedirect);
 			
 			RequestDispatcher rd = req.getRequestDispatcher(loggedInRedirect);
@@ -78,6 +85,18 @@ public class LoginServlet extends BaseServlet {
 			 
 			 boolean check = u.populateUserDataBean(username);
 			 if (check){
+				 
+				 //get the rankings
+				 MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+				 syncCache.setErrorHandler(ErrorHandlers.getConsistentLogAndContinue(Level.INFO));
+				 
+				 List<GladiatorDataBean> rankings = new ArrayList<GladiatorDataBean>();
+				 rankings = (ArrayList<GladiatorDataBean>) syncCache.get(rankingsKey);
+				 
+				 if (rankings == null){
+					 log.info("No rankings found");
+				 }
+				 sess.setAttribute(rankingsKey, rankings);
 				 sess.setAttribute(userBeanData, u);
 				 sess.setAttribute(userDataRefresh, System.currentTimeMillis());
 				 

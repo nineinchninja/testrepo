@@ -6,6 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 <link href="/stylesheets/main.css" type="text/css" rel="stylesheet" />
 <title>Challenges for upcoming events</title>

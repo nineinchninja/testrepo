@@ -6,6 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="admin/tablestripe.js"></script>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 <link href="/stylesheets/main.css" type="text/css" rel="stylesheet" />
 <title>Challenge Another Gladiator</title>
@@ -69,5 +70,23 @@
 <hr>
 </table>
  </form>
+ <h2>Rankings</h2>
+<table class="stripedtable">
+<tr>
+<th class="table-header">Ranking</th><th class="table-header">Name</th><th class="table-header">Owner</th><th class="table-header">Wins</th><th class="table-header">Losses</th><th class="table-header">Ties</th><th class="table-header">Rating</th>
+</tr>
+<c:forEach var="gladiator" items='${RANKINGS}' varStatus="Rank">
+
+	<tr class="table-results">
+		<td>${Rank.count }</td>
+		<td ><c:out value='${gladiator.capitalizedName}' /></td>
+		<td ><c:out value='${gladiator.owner}' /></td>
+		<td ><c:out value='${gladiator.wins}' /></td>
+		<td ><c:out value='${gladiator.losses}' /></td>
+		<td ><c:out value='${gladiator.ties}' /></td>
+		<td ><c:out value='${gladiator.rating}' /></td>
+	</tr>
+</c:forEach>
+</table>
 </body>
 </html>

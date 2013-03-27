@@ -8,6 +8,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="admin/tablestripe.js"></script>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 
 <title>My Ludus</title>
@@ -44,13 +45,13 @@
 <c:if test="${nameneeded == 'True'}">
 	<form action="/namechange" method="post">
 </c:if>
-<table class="table-results">
+<table class="stripedtable">
 <tr>
-<th class="table-header">Name</th><th class="table-header">Status</th><th class="table-header">Wins</th><th class="table-header">Losses</th><th class="table-header">Ties</th><th class="table-header">Popularity</th>
+<th class="table-header">Name</th><th class="table-header">Status</th><th class="table-header">Wins</th><th class="table-header">Losses</th><th class="table-header">Ties</th><th class="table-header">Rating</th>
 </tr>
 <c:forEach var="gladiator" items='${UserData.ludus.gladiators}'>
 
-<tr class="table-results">
+<tr >
 <td >
 	<c:choose>
 		<c:when test="${gladiator.name == none}">
@@ -65,7 +66,7 @@
 <td ><c:out value='${gladiator.wins}' /></td>
 <td ><c:out value='${gladiator.losses}' /></td>
 <td ><c:out value='${gladiator.ties}' /></td>
-<td ><c:out value='${gladiator.popularity}' /></td>
+<td ><c:out value='${gladiator.rating}' /></td>
 </tr>
 </c:forEach>
 <c:if test="${nameneeded == 'True'}">
@@ -78,5 +79,6 @@
 <c:if test="${nameneeded == 'True'}">
 	</form>
 </c:if>
+
 </body>
 </html>

@@ -6,6 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="admin/tablestripe.js"></script>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 <link href="/stylesheets/main.css" type="text/css" rel="stylesheet" />
 <title>Training</title>
@@ -19,7 +20,7 @@
 <script>$("#navbar").load("/admin/navbar.html");</script>
 <hr>
 <h1>Attributes</h1>
-<table class="table-results" caption="Attributes">
+<table class="stripedtable" caption="Attributes">
 <tr>
 	<th class="table-header">Name</th>
 	<th class="table-header">Strength</th>
@@ -43,7 +44,7 @@
 </table>
 <hr>
 <h1>Weapon Skills</h1>
-<table class="table-results" caption="Weapon Skills">
+<table class="stripedtable" caption="Weapon Skills">
 	<tr>
 		<th class="table-header">Name</th>
 		<th class="table-header">Sword</th>
@@ -72,7 +73,7 @@
 <hr>
 <h1>Training Assignments</h1>
 <form method="post" action="/gladiatortraining">
-<table class="table-results">
+<table class="stripedtable">
 	<tr>
 		<th class="table-header">Name</th>
 		<th class="table-header">Current training focus</th>

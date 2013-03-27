@@ -6,6 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="admin/tablestripe.js"></script>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 <link href="/stylesheets/main.css" type="text/css" rel="stylesheet" />
 <title>Gladiator Market</title>
@@ -20,7 +21,7 @@
 <hr>
 <h2>Your available funds: ${UserData.ludus.availableGold} gold</h2>
 <hr>
-<table class="table-results">
+<table class="stripedtable">
 <tr>
 	<th class="table-header">Gender</th>
 	<th class="table-header">Strength</th>
@@ -31,8 +32,8 @@
 	<th class="table-header">Willpower</th>
 	<th class="table-header">Price (gold)</th>
 </tr>
-<c:forEach var="gladiator" items='${Recruits.gladiators}'>
-<tr class="table-results">
+<c:forEach var="gladiator" items='${Recruits.gladiators}' varStatus="count">
+<tr >
 <form action="/buygladiator" method="POST">
 	<input type="hidden" name="gladKey" value='${gladiator.key}'/>
 	<td ><c:out value='${gladiator.gender}' /></td>

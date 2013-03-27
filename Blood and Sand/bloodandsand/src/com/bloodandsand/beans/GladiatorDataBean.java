@@ -60,6 +60,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	public long ties; 
 	public long matches; //total matches 
 	public long popularity;
+	private long rating = 0;
 	
 	private String currentTrainingFocus;
 	private Date lastTrainingChangeDate;
@@ -125,7 +126,13 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 			thisEntity.setProperty("ownerKey", findOwnerKey((String)thisEntity.getProperty("owner")));	
 			this.ownerKey = (Key)thisEntity.getProperty("ownerKey");
 			saveGladiator();
-		}		
+		}
+		if (thisEntity.hasProperty("rating") && thisEntity.getProperty("rating") != null){		
+			this.rating = (Long) thisEntity.getProperty("rating"); 
+		} else {
+			thisEntity.setProperty("rating", 0);	
+			saveGladiator();
+		}
 	}			
 	
 	public Key getOwnerKey(){
@@ -187,6 +194,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		
 		setStatus("FIT");
 		setOwner(null, null);
+		setRating(0);
 		setPrice();
 	}
 	
@@ -245,6 +253,8 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		} else {
 			thisEntity.setProperty("name", name);
 		}
+		
+		thisEntity.setProperty("rating", this.rating);
 		
 		thisEntity.setProperty("gender", gender);		
 		
@@ -919,31 +929,59 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		return g;
 	}
 
-	public void addWin() {
+	public void addWin(long opponentRating) {
 		// add 1 to the wins and total matches
 
 		wins += 1;
 		matches += 1;
 		thisEntity.setProperty("wins", wins);
 		thisEntity.setProperty("matches", matches);
-		
-
-
+		//adjust this gladiator's rating based on the opponent
+		rating += BASE_WIN_RATING_BONUS + 0.5*opponentRating;//currently the winner always receives the same calculation
+															//regardless of whether he or she was higher ranked before the fight
+		thisEntity.setProperty("rating", rating);
 	}
 	
-	public void addLoss() {
+	public void addLoss(long opponentRating) {
 		// add 1 to the wins and total matches
 		losses += 1;
 		matches += 1;
 		thisEntity.setProperty("losses", losses);
-		thisEntity.setProperty("matches", matches);			
+		thisEntity.setProperty("matches", matches);
+		//adjust this gladiator's rating based on the opponent
+		long adjust = 0;
+
+		if (rating >= opponentRating){//if the opponent was lower ranked, ranking takes a bigger hit
+			 adjust = (long) (0.5*(rating - opponentRating));
+			if (adjust < 10){
+				adjust = 10;
+			}
+			
+		} else {//if the opponent was higher ranked
+			adjust = (long) (0.5*(opponentRating - rating));
+			if (adjust < 10){
+				adjust = 10;
+			}
+		}
+		rating -= adjust;
+		if (rating < 0) {rating = 0;}
+		thisEntity.setProperty("rating", rating);
 	}
 
-	public void addTie() {
+	public void addTie(long opponentRating) {
 		matches+= 1;
 		ties +=1;	
 		thisEntity.setProperty("ties", ties);
 		thisEntity.setProperty("matches", matches);	
+		//adjust the rating
+		long adjust = 0;
+		if (rating < opponentRating){//in a tie, the lower ranked fighter moves half the distance to the higher ranked fighter
+			adjust = (long)(0.5*(opponentRating - rating));
+		} else {//in a tie, the higher ranked fighter has no change to rating
+			adjust = 0;
+		}
+		rating += adjust;
+		thisEntity.setProperty("rating", rating);
 		
 	}
 
@@ -982,6 +1020,14 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		
 	}	
 	
+	public long getRating(){
+		return this.rating;
+	}
+	
+	public void setRating(long rating){
+		this.rating = rating;
+		thisEntity.setProperty("rating",this.rating);
+	}
 	
 	public String getStrengthString(){
 		 return getAttributeRating(strength);

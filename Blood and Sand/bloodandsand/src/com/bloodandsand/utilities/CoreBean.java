@@ -19,6 +19,8 @@ public abstract class CoreBean {
 	
 	protected static String tournamentEntity = "Tournament";
 	
+	protected static String rankingsKey = "RANKINGS";
+	
 	
 	protected static int BASE_NUMBER_OF_RECRUITS = 25;//used to limit the query for the market place
 	protected static int BASE_NUMBER_OF_TRAINING_GLADIATORS = 1000; //used to create the query for applying training
@@ -41,6 +43,7 @@ public abstract class CoreBean {
 	public enum Status {INITIATED, ACCEPTED, DECLINED, EXPIRED, COMPLETED, CANCELED};	
 	
 	public static int STANDARD_WIN_AMOUNT = 10; //the amount that a gladiator wins for winning a fight, regardless of wager
+	public static long BASE_WIN_RATING_BONUS = 10; //the base amount you will gain for a win, regardless of opponent's rating
 	
 	protected int tournamentFrequency = 24 ;//hours between scheduled tournaments
 	protected static int MAX_TOURNAMENTS = 1; //limit for query on existing tournaments
