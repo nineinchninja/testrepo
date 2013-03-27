@@ -1,20 +1,14 @@
-<!-- Indices written at Tue, 26 Mar 2013 20:00:14 EDT -->
+<!-- Indices written at Tue, 26 Mar 2013 22:50:11 EDT -->
 
 <datastore-indexes>
 
-    <!-- Used 28 times in query history -->
+    <!-- Used 6 times in query history -->
     <datastore-index kind="Tournament" ancestor="false" source="auto">
         <property name="status" direction="asc"/>
         <property name="eventDate" direction="desc"/>
     </datastore-index>
 
-    <!-- Used 14 times in query history -->
-    <datastore-index kind="Gladiator" ancestor="false" source="auto">
-        <property name="status" direction="asc"/>
-        <property name="currentTrainingFocus" direction="asc"/>
-    </datastore-index>
-
-    <!-- Used 9 times in query history -->
+    <!-- Used 1 time in query history -->
     <datastore-index kind="Gladiator" ancestor="false" source="auto">
         <property name="status" direction="asc"/>
         <property name="owner" direction="asc"/>
