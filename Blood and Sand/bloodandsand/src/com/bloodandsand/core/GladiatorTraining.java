@@ -26,6 +26,8 @@ import com.bloodandsand.beans.UserDataBean;
 @SuppressWarnings("serial")
 public class GladiatorTraining  extends BaseServlet{
 	
+	private boolean logEnabled = false;
+	
 	
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 		      throws IOException, ServletException {
@@ -51,7 +53,7 @@ public class GladiatorTraining  extends BaseServlet{
 		} else {
 			UserDataBean usr = (UserDataBean)req.getSession().getAttribute(userBeanData);
 			if (usr == null){
-				log.info("GladiatorTraining.java No user bean available. Training request failed");
+				log.warning("GladiatorTraining.java No user bean available. Training request failed");
 				resp.sendRedirect(loginRedirect);
 			} else {
 				boolean changed = false;
@@ -62,9 +64,10 @@ public class GladiatorTraining  extends BaseServlet{
 					gbean = gldtrs.next();
 					gladlist.add(gbean);
 					String newTraining = req.getParameter(gbean.getKey());
-					log.info("New training value should be: " + newTraining);
+					if (logEnabled){log.info("New training value should be: " + newTraining);}
+					
 					if ( newTraining != null && !newTraining.equals("No change")){						
-						log.info("New training value should be: " + newTraining);						
+						if (logEnabled){log.info("New training value should be: " + newTraining);}						
 						gbean.setNewTraining(newTraining);
 						gbean.saveGladiator();
 						changed = true;

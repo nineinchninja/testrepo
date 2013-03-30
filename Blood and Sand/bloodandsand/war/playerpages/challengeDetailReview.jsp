@@ -28,7 +28,9 @@
 		<th class="table-header">${ResultsDetailData.incumbantName}</th>			
 	</tr>
 	<tr>
-		<td colspan="3" class="match-detail" cellpadding="20">${ResultsDetailData.fightDescription}</td>
+		<td colspan="3" cellpadding="20"><div class="match-detail" >${ResultsDetailData.fightDescription}</div></td>
+	</tr>
+	<tr><td> ${ResultsDetailData.challengerStats}</td><td></td><td>${ResultsDetailData.challengerStats}</td>
 	</tr>
 	
 </table>

@@ -25,6 +25,8 @@ import com.google.appengine.api.datastore.FetchOptions;
 public class FreshRecruits  extends BaseServlet {
 	private static int BASE_NUMBER_OF_RECRUITS = 20; //this is the number of recruits that should be available for purchase at any time.
 	protected static final Logger log = Logger.getLogger(FreshRecruits.class.getName());
+	private boolean logEnabled = false;
+	
 	private FetchOptions free_recruit_check =
 		    FetchOptions.Builder.withLimit(BASE_NUMBER_OF_RECRUITS + 5);
 	
@@ -33,7 +35,7 @@ public class FreshRecruits  extends BaseServlet {
 		int results = 0;
     	GladiatorDataBean g = new GladiatorDataBean();
 		results = g.countAvailableGladiators(free_recruit_check);//check the number of gladiators available
-		log.info("current number of recruits= " + results);
+		if (logEnabled){log.info("current number of recruits= " + results);}
 		
         if (results <= BASE_NUMBER_OF_RECRUITS){
         	int count = BASE_NUMBER_OF_RECRUITS - results;

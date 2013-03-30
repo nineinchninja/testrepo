@@ -22,6 +22,8 @@ public class MatchResultsServlet extends BaseServlet {
 	 * 
 	 */
 	private static final long serialVersionUID = -1691635922241201395L;
+	
+	private boolean logEnabled = false;
 
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException, ServletException{
@@ -39,7 +41,7 @@ public class MatchResultsServlet extends BaseServlet {
 	
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException, ServletException{
-		log.info("HEREHERHEHERER");
+		if (logEnabled){log.info("Viewing Match Detail Initiated.");}
 		HttpSession sess = req.getSession();
 		if (!checkLogin(req) || sess.getAttribute(userBeanData) == null){			
 			resp.sendRedirect(loginPage);
@@ -54,16 +56,16 @@ public class MatchResultsServlet extends BaseServlet {
 
 			if (tournaments == null || resultToReview == null){
 				write_line(req, resp, "Your request could not be processed at this time. Please try again later.");
-				log.info("Something was null when trying to review a match detail");
+				log.warning("Something was null when trying to review a match detail");
 			} else {
 				// 
 				//
 				for (TournamentDataBean tourney: tournaments){
 					List<MatchResultBean> reslts = new ArrayList<MatchResultBean>();
 					reslts = tourney.getResults();
-					log.info("Number of results in tourney: " + reslts.size());
+					if (logEnabled){log.info("Number of results in tourney: " + reslts.size());}
 					if (reslts == null || reslts.size() == 0){
-						log.info("No matches available on tourney");
+						if (logEnabled){log.info("No matches available on tourney");}
 					} else {
 						for (MatchResultBean result: reslts ){
 							
@@ -76,7 +78,7 @@ public class MatchResultsServlet extends BaseServlet {
 				}
 				if (!found){
 					write_line(req, resp, "That match result is not available");
-					log.info("Match detail selected not available");
+					if (logEnabled){log.info("Match detail selected not available");}
 				} else {					
 					RequestDispatcher rd = req.getRequestDispatcher(challengeDetailReviewJsp);
 					rd.forward(req, resp);

@@ -21,6 +21,9 @@ public class GladiatorWeaponSkillsBean extends CoreBean implements java.io.Seria
 	/**
 	 * 
 	 */
+	
+	private boolean logEnabled = false;
+	
 	private static final long serialVersionUID = -4314632199832289974L;
 	protected static final Logger log = Logger.getLogger(GladiatorWeaponSkillsBean.class.getName());
 	private long sword;

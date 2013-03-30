@@ -14,7 +14,6 @@ import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
-import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.datastore.Transaction;
@@ -29,6 +28,7 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 	 * 
 	 */
 	private static final long serialVersionUID = 108501788037447758L;
+	private boolean logEnabled = true;
 
 
 	protected static final Logger log = Logger.getLogger(TournamentDataBean.class.getName());
@@ -72,13 +72,12 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 	}
 	
 	public boolean checkTournamentDate() {
-		// TODO Auto-generated method stub		
 		
 		Calendar today = Calendar.getInstance(); // creates calendar
 		today.setTime(new Date());
 		Calendar event = Calendar.getInstance();
 		event.setTime(eventDate);
-	    log.info("Tournament date today?: " + (today.get(Calendar.DATE) == event.get(Calendar.DATE)));
+		if (logEnabled){log.info("Tournament date today?: " + (today.get(Calendar.DATE) == event.get(Calendar.DATE)));}
 	    return (today.get(Calendar.DATE) == event.get(Calendar.DATE));
 	     // returns new date object for the time the tournament will happen		
 	}
@@ -99,10 +98,10 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 					matches.add(bean);
 					
 				} else {//if the challenge is expired, it needs to have the wager refunded
-					if (!TESTTOGGLE && bean.getStatusEnum().equals(Status.INITIATED)){//test togglemakes it possible to run the tournament multiple times 
+					if (!TESTTOGGLE && bean.getStatusEnum().equals(Status.INITIATED) || bean.getStatusEnum().equals(Status.DECLINED)){//test togglemakes it possible to run the tournament multiple times 
 						bean.expireChallenge();						
 					}
-				} //else
+				} //end else
 				bean.saveChallenge();			
 			}
 		}
@@ -110,7 +109,7 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 			this.saveTournament();
 		}
 		
-		log.info("Created " + matches.size() + " matches for the tournament");
+		if (logEnabled){log.info("Created " + matches.size() + " matches for the tournament");}
 		return matches;
 	}
 	
@@ -139,7 +138,9 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 		Query qy = new Query(matchResultEntity, thisEntity.getKey());
 		FetchOptions options = FetchOptions.Builder.withChunkSize(200);
         PreparedQuery preparedQuery = datastore.prepare(qy);
-        log.info("Found " + preparedQuery.countEntities(options) + " match result entities"); 
+        
+        if (logEnabled){log.info("Found " + preparedQuery.countEntities(options) + " match result entities");} 
+        
         for (Entity resul : preparedQuery.asIterable(options)){
         	results.add(new MatchResultBean(resul));
         }			
@@ -152,7 +153,8 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 		Query qy = new Query(challengeEntity, thisEntity.getKey());
 		FetchOptions options = FetchOptions.Builder.withChunkSize(200);
         PreparedQuery preparedQuery = datastore.prepare(qy);
-        log.info("Found " + preparedQuery.countEntities(options) + " entities"); 
+        
+        if (logEnabled){log.info("Found " + preparedQuery.countEntities(options) + " entities");} 
         for (Entity chal : preparedQuery.asIterable(options)){
         	challenges.add(new GladiatorChallengeBean(chal, true));
         }		
@@ -236,13 +238,13 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
         
         //Filter rankableGladiators = CompositeFilterOperator.and(unowned, alive);
         q.setFilter(alive);
-        FetchOptions options = FetchOptions.Builder.withChunkSize(200);
+        FetchOptions options = FetchOptions.Builder.withChunkSize(1000);
         
         PreparedQuery preparedQuery = datastore.prepare(q);
         if (preparedQuery.countEntities(options) > 0){
         	
-            log.info("Found " + preparedQuery.countEntities(options) + " gladiators for rankings"); 
-            for (Entity gladiator : preparedQuery.asIterable(options)){
+        	if (logEnabled){log.info("Found " + preparedQuery.countEntities(options) + " gladiators for rankings");} 
+            for (Entity gladiator : preparedQuery.asList(options)){
             	GladiatorDataBean bean = new GladiatorDataBean(gladiator);
             	if (bean.getOwner() != null && !bean.getOwner().equalsIgnoreCase("None") || bean.getMatches() > 0){
             		gladiators.add(bean);
@@ -250,8 +252,8 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
             }
             
             if (gladiators.size() > 0){
-            	MemcacheService asyncCache = MemcacheServiceFactory.getMemcacheService();
-            	asyncCache.put(rankingsKey, gladiators);
+            	MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+            	syncCache.put(rankingsKey, gladiators);
             }
         } else {
         	log.warning("Found no gladiators for rankings"); 

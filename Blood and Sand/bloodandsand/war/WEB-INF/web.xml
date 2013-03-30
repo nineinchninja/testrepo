@@ -2,7 +2,7 @@
 	
 	<security-constraint>
         <web-resource-collection>
-            <url-pattern>/cron/refreshrecruits</url-pattern>
+            <url-pattern>/cron/*</url-pattern>
         </web-resource-collection>
         <auth-constraint>
             <role-name>admin</role-name>
@@ -32,7 +32,14 @@
 		<servlet-name>BuyGladiator</servlet-name>
 		<url-pattern>/buygladiator</url-pattern>
 	</servlet-mapping>
-	
+	<servlet>
+		<servlet-name>SetRankings</servlet-name>
+		<servlet-class>com.bloodandsand.core.SetRankings</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>SetRankings</servlet-name>
+		<url-pattern>/cron/setrankings</url-pattern>
+	</servlet-mapping>
 	
 	<servlet>
 		<servlet-name>MatchResultsServlet</servlet-name>

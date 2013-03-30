@@ -24,6 +24,7 @@ import com.bloodandsand.utilities.BaseServlet;
  *
  */
 public class ApplyName extends BaseServlet {
+	
 
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 		      throws IOException, ServletException {
@@ -49,7 +50,7 @@ public class ApplyName extends BaseServlet {
 		} else {
 			UserDataBean usr = (UserDataBean)req.getSession().getAttribute(userBeanData);
 			if (usr == null){
-				log.info("ApplyName.java No user bean available. Naming request failed");
+				log.warning("ApplyName.java No user bean available. Naming request failed");
 				resp.sendRedirect(loginRedirect);
 			} else {
 				String nameError = "";

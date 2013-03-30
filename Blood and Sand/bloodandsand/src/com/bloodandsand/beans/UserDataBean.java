@@ -254,13 +254,13 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 		
 	public Boolean setNewEmailAddress(String emailIn){	
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		//Key accountKey = KeyFactory.createKey("account", accountGroup);	
 		
 		Query q = new Query(accountEntity);
         q.isKeysOnly();
         q.setFilter(new FilterPredicate ("email", FilterOperator.EQUAL, emailIn));
     	FetchOptions username_search =
     		    FetchOptions.Builder.withLimit(5);
+    	
         int results = datastore.prepare(q).countEntities(username_search);
         if (results > 0){
         	return false;
@@ -299,13 +299,13 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 	public Boolean setNewUserName(String usrname){
 		//checks to see if the name is available
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		//Key accountKey = KeyFactory.createKey("account", accountGroup);	
 	
 		Query q = new Query(accountEntity);
         q.isKeysOnly();
         q.setFilter(new FilterPredicate ("userName", FilterOperator.EQUAL, usrname));
     	FetchOptions username_search =
     		    FetchOptions.Builder.withLimit(5);
+    	
         int results = datastore.prepare(q).countEntities(username_search);
         if (results > 0){
         	return false;

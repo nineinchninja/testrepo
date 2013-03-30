@@ -26,14 +26,14 @@ import com.bloodandsand.utilities.BaseServlet;
 @SuppressWarnings("serial")
 public class GladiatorMarket extends BaseServlet{
 	
-	
+	private boolean logEnabled = false;
 		
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 		      throws IOException, ServletException {
 		if (!checkLogin(req) || req.getSession().getAttribute(userBeanData) == null){			
 			resp.sendRedirect(loginPage);
 		} else {
-			log.info("starting search for recruits");
+			if (logEnabled){log.info("starting search for recruits");}
 			GladiatorDataBean temp = new GladiatorDataBean();
 			LudusDataBean availableRecruits = new LudusDataBean();//this is a bit of a hack, but it works for now. Using a ludus object to hold all of the
 			availableRecruits.setGladiators(temp.getGladiatorsOnSale());// gladiators in the market

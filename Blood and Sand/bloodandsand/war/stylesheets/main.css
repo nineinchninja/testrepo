@@ -75,8 +75,10 @@ tr.alt td{
 }
 
 .match-detail{
-	white-space: pre-wrap;
-	cellpadding:10px;
+	position: relative;
+	white-space: pre-wrap;	
+	margin-left: 10%;
+	margin-right: 10%;
 }
 
 .table-bottom{

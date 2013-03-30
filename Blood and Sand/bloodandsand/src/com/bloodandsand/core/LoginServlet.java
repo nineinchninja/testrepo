@@ -62,6 +62,7 @@ public class LoginServlet extends BaseServlet {
 		String pwd 		= req.getParameter("password");
 		Boolean login   = false;
 		HttpSession sess = req.getSession();
+		sess.setMaxInactiveInterval(MAX_SESSION_INACTIVE_TIME);
 		UserDataBean u = new UserDataBean();
     	try {
 			login = u.attemptLogin(username, pwd);
@@ -86,17 +87,7 @@ public class LoginServlet extends BaseServlet {
 			 boolean check = u.populateUserDataBean(username);
 			 if (check){
 				 
-				 //get the rankings
-				 MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
-				 syncCache.setErrorHandler(ErrorHandlers.getConsistentLogAndContinue(Level.INFO));
 				 
-				 List<GladiatorDataBean> rankings = new ArrayList<GladiatorDataBean>();
-				 rankings = (ArrayList<GladiatorDataBean>) syncCache.get(rankingsKey);
-				 
-				 if (rankings == null){
-					 log.info("No rankings found");
-				 }
-				 sess.setAttribute(rankingsKey, rankings);
 				 sess.setAttribute(userBeanData, u);
 				 sess.setAttribute(userDataRefresh, System.currentTimeMillis());
 				 

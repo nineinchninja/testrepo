@@ -28,6 +28,8 @@ import com.google.appengine.api.datastore.EntityNotFoundException;
  */
 public class ChallengeReviewServlet extends BaseServlet {
 	
+	private boolean logEnabled = false;
+	
 	/**
 	 * 
 	 */
@@ -67,7 +69,7 @@ public class ChallengeReviewServlet extends BaseServlet {
 
 			if (usr == null || acceptedChallenge == null){
 				write_line(req, resp, "Your request could not be processed at this time. Please try again later.");
-				log.info("Something was null when trying to accept the challenge");
+				log.warning("Something was null when trying to accept the challenge");
 			} else {
 				// Get the information from the user bean. If not on the user bean, go to the db and retrieve it
 				//
@@ -75,7 +77,7 @@ public class ChallengeReviewServlet extends BaseServlet {
 					List<GladiatorChallengeBean> challs = new ArrayList<GladiatorChallengeBean>();
 					challs = gladtr.getChallenges();
 					if (challs == null){
-						log.info("gladiator challenges not available");
+						log.warning("gladiator challenges not available");
 					} else {
 						for (GladiatorChallengeBean challnge: challs ){
 							if (challnge.getGladiatorChallengeKey().equals(acceptedChallenge)){
@@ -93,11 +95,11 @@ public class ChallengeReviewServlet extends BaseServlet {
 				}
 				if (!enoughGold){
 					write_line(req, resp, "You do not have enough gold to accept that challenge");
-					log.info("Challenge not accepted due to lack of funds");
+					if (logEnabled){log.info("Challenge not accepted due to lack of funds");}
 				} else {
 					if (!accpted){
 						write_line(req, resp, "That gladiator has already accepted another challenge");
-						log.info("Challenge not accepted due to gladiator not being available");
+						if (logEnabled){log.info("Challenge not accepted due to gladiator not being available");}
 					} else {
 						usr.populateUserDataBean(usr.getUserName());
 						sess.setAttribute(userBeanData, usr);

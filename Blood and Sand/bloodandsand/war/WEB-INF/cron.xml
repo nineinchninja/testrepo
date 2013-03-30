@@ -18,4 +18,10 @@
     <schedule>every day 00:05</schedule>
     <timezone>America/New_York</timezone>
   </cron>
+     <cron>
+    <url>/cron/setrankings</url>
+    <description>Every 40 minutes the system checks to ensure the rankings are in the memcache</description>
+    <schedule>every 40 minutes</schedule>
+    <timezone>America/New_York</timezone>
+  </cron>
 </cronentries>

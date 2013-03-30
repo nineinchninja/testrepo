@@ -21,6 +21,8 @@ public class LudusDataBean extends CoreBean implements java.io.Serializable{
 	/**
 	 * 
 	 */
+	private boolean logEnabled = true;
+	
 	private static final long serialVersionUID = -2520748803858400976L;
 	private long availableGold;
 	private long wageredGold;
@@ -122,9 +124,9 @@ public class LudusDataBean extends CoreBean implements java.io.Serializable{
 				GladiatorDataBean q = itr.next();
 				if (q.isGladiatorAvailableToChallenge()){
 					avail.add(q);
-					log.info("Added gladiator " + q.getName() + " to my challengers");
+					if (logEnabled){log.info("Added gladiator " + q.getName() + " to my challengers");}
 				} else {
-					log.info("Did NOT add gladiator " + q.getName() + " to my challengers");
+					if (logEnabled){log.info("Did NOT add gladiator " + q.getName() + " to my challengers");}
 				}
 				
 			}
@@ -140,7 +142,7 @@ public class LudusDataBean extends CoreBean implements java.io.Serializable{
 		thisEntity.setProperty("availableGold", availableGold);
 		thisEntity.setProperty("wageredGold", wageredGold);
 		//note that sending a negative value reverses this.
-		log.info("wager set: " + wager);
+		if (logEnabled){log.info("wager set: " + wager);}
 		
 	}
 	public void updateWageredGold(long wager) {

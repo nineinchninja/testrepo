@@ -5,7 +5,6 @@
 package com.bloodandsand.beans;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
@@ -14,7 +13,6 @@ import com.bloodandsand.utilities.CoreBean;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
@@ -40,6 +38,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 	 * and will be included in the next tournament
 	 */
 	
+	boolean logEnabled = false;
 	
 	public Date challengeDate;
 	private GladiatorDataBean challenger;
@@ -85,6 +84,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		}
 		
 		this.status = Status.valueOf((String)challenge.getProperty("status"));
+		if (logEnabled) {log.info("challenge bean created from entity");}
 	}
 	
 	public GladiatorChallengeBean(GladiatorDataBean challenger, GladiatorDataBean incumbant, Long wager){
@@ -101,6 +101,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		Entity temp = new Entity(challengeEntity, tourn.getDataStoreKey());
 		thisEntity = temp;
 		setUpEntity();
+		if (logEnabled) {log.info("challenge bean created with gladiators and wager");}
 	}
 	
 	private void setUpEntity(){
@@ -124,10 +125,9 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		tournaments = datastore.prepare(trn).asList(FetchOptions.Builder.withDefaults().limit(MAX_TOURNAMENTS));
 		if (tournaments == null || tournaments.size() == 0){//for those odd situations where there are no tournaments
 			
-			log.info("No existing tournament. Created new tournament");
 			TournamentDataBean tournament = new TournamentDataBean();
 			tournament.saveTournament();
-			log.info("No existing tournament. Created new tournament: " + tournament.getKey());
+			if (logEnabled) {log.info("No existing tournament. Created new tournament: " + tournament.getKey());}
 			return tournament;
 		} else {
 			if (tournaments.size() > 1){
@@ -150,6 +150,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		findLud = new Query(ludusEntity).setAncestor(incumbant.getOwnerKey());
 		temp = datastore.prepare(findLud).asSingleEntity();
 		incumbantLudus = new LudusDataBean(temp);
+		if (logEnabled) {log.info("findluduses executed");}
 	}
 	
 	public GladiatorChallengeBean createDummyChallenge(){
@@ -166,6 +167,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		c.incumbant.setOwner("owner1", null);
 		c.wager = 10;
 		setUpEntity();
+		if (logEnabled) {log.info("Dummy challenge created");}
 		return c;
 	}
 	
@@ -175,44 +177,35 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		
 		boolean successful = false;
 		if (!challenger.isGladiatorAvailableToChallenge() || !incumbant.isGladiatorAvailableToChallenge()){
-			log.info("One of the gladiators was not available");
+			log.warning("One of the gladiators was not available");
 			return successful;
 		} else {
 			for (GladiatorChallengeBean chall: challenger.getChallenges()){
 				if (!chall.getGladiatorChallengeKey().equals(this.getGladiatorChallengeKey())){
 					chall.declineChallenge();
 					chall.saveChallenge();
-					log.info("Wrong challenge");
+					if (logEnabled) {log.info("Wrong challenge");}
 				} else {
 					successful = true;
-					log.info("Matched challenges");
-				}
+					if (logEnabled) {log.info("Found challenge");}				}
 			}
 			for (GladiatorChallengeBean chall: incumbant.getChallenges()){
 				if (!chall.getGladiatorChallengeKey().equals(this.getGladiatorChallengeKey())){
 					chall.declineChallenge();
 					chall.saveChallenge();
-					log.info("Wrong challenge");
+					if (logEnabled) {log.info("Wrong challenge");}
 				} else {
 					successful = true;
-					log.info("Matched challenges");
+					if (logEnabled) {log.info("Found challenge");}
 				}
 			}			
 			if (successful){
 				//first need to apply the wager to the incumbant. It was already set for the challenger when the challenge was created
 				//but only if there is a wager
-//				if (wager > 0){
-//					if (incumbantLudus == null){
-//						findLuduses();
-//					}
-//					incumbantLudus.setWager(this.wager);
-//					incumbantLudus.saveLudus();
-//					
-//				}
 				
 				this.status = Status.ACCEPTED;
 				this.saveChallenge();
-				log.info("New status is " + this.status.toString());
+				if (logEnabled) {log.info("New status is " + this.status.toString());}
 			}
 			
 			return successful;
@@ -245,6 +238,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		}
 
 		thisEntity.setProperty("status",this.status.toString());
+		if (logEnabled) {log.info("Challenge expired");}
 	}
 	
 	public void declineChallenge() {
@@ -254,6 +248,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 			refundWager();
 		}
 		thisEntity.setProperty("status",this.status.toString());
+		if (logEnabled) {log.info("Challenge declined");}
 	}
 	
 	public void rescindChallenge() {
@@ -264,6 +259,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		}
 
 		thisEntity.setProperty("status",this.status.toString());
+		if (logEnabled) {log.info("Challenge canceled");}
 	}
 	
 	public Status getStatusEnum(){
@@ -289,7 +285,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 			} 
 			challengerLudus.setWager(-(this.wager));
 			challengerLudus.saveLudus();
-			log.info("refunded wager of : " + wager);
+			if (logEnabled) {log.info("refunded wager of : " + wager);}
 			//
 
 		}
@@ -307,7 +303,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 				this.challenger = new GladiatorDataBean(challenger);
 			}
 			 if (challenger == null){
-				 log.info("GladiatorChallengeBean: unable to resolve challenger");
+				 log.warning("GladiatorChallengeBean: unable to resolve challenger");
 				 return;
 			 }
 		}
@@ -326,7 +322,7 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 				this.incumbant = new GladiatorDataBean(incumb);
 			}
 			 if (incumbant == null){
-				 log.info("GladiatorChallengeBean: unable to resolve incumbant");
+				 log.warning("GladiatorChallengeBean: unable to resolve incumbant");
 				 return;
 			 }
 		}
@@ -412,11 +408,11 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 			if (incumbantLudus == null || challengerLudus == null){
 				findLuduses();
 			}			
-			incumbantLudus.setWager(-wager);
-			challengerLudus.setWager(-wager);
+			incumbantLudus.setWager(-wager);//returns the wagers to both fighters
+			challengerLudus.setWager(-wager);//moving the wager from the wageredGold to availableGold
 			incumbantLudus.saveLudus();
 			challengerLudus.saveLudus();
-			log.info("refunded wagers to available gold: " + wager);
+			if (logEnabled){log.info("refunded wagers to available gold: " + wager);}
 		}
 		this.status = Status.COMPLETED;
 		
@@ -431,12 +427,12 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 		if (wager > 0){
 			
 			incumbantLudus.updateWageredGold(-wager);
-			challengerLudus.setWager(-wager);
+			challengerLudus.setWager(-wager);//moves the wagered gold from wageredGold to available gold
 			
 		}
 		this.status = Status.COMPLETED;
-		challengerLudus.updateAvailableGold((2 * wager) + STANDARD_WIN_AMOUNT);
-		log.info("Awarded challenger: " + wager + " and " + STANDARD_WIN_AMOUNT);
+		challengerLudus.updateAvailableGold((wager) + STANDARD_WIN_AMOUNT);//removes the wagered gold from the wageredGold store
+		if (logEnabled) {log.info("Awarded challenger: " + wager + " and " + STANDARD_WIN_AMOUNT);}//awards the wager and the standard fight win reward
 		incumbantLudus.saveLudus();
 		challengerLudus.saveLudus();
 	}
@@ -448,12 +444,12 @@ public class GladiatorChallengeBean extends CoreBean implements Serializable {
 			findLuduses();
 		}
 		if (wager > 0){			
-			challengerLudus.updateWageredGold(-wager);
-			incumbantLudus.setWager(-wager);			
+			challengerLudus.updateWageredGold(-wager);//removes the wagered gold from the wageredGold store
+			incumbantLudus.setWager(-wager);//moves the wagered gold from wageredGold to available gold
 		}
 		this.status = Status.COMPLETED;
-		incumbantLudus.updateAvailableGold((2 * wager) + STANDARD_WIN_AMOUNT);
-		log.info("Awarded incumbant: " + wager + " and " + STANDARD_WIN_AMOUNT);
+		incumbantLudus.updateAvailableGold((wager) + STANDARD_WIN_AMOUNT);//awards the wager and the standard fight win reward
+		if (logEnabled){log.info("Awarded incumbant: " + wager + " and " + STANDARD_WIN_AMOUNT);}
 		incumbantLudus.saveLudus();
 		challengerLudus.saveLudus();
 

@@ -35,6 +35,7 @@ public class GladiatorCombat extends BaseServlet{
 	 */	
 	
 	protected static final Logger log = Logger.getLogger(GladiatorCombat.class.getName());
+	private boolean logEnabled = false;
 	
 	public static final String[] NON_CRITICAL_BODY_PARTS = {"HAND", "HAND", "ARM", "ARM", 
 															"LEG", "LEG", "SHOULDER", "SHOULDER", 
@@ -92,7 +93,6 @@ public class GladiatorCombat extends BaseServlet{
 	boolean ranTournament = false;
 	long round;//tracks the number of 6 second turns in the combat
 	GladiatorChallengeBean currentMatch;
-	String roundDescription;
 	String result;
 	
 	List<GladiatorChallengeBean> matches = new ArrayList<GladiatorChallengeBean>();
@@ -114,7 +114,7 @@ public class GladiatorCombat extends BaseServlet{
 			log.info("Total Time for getting matchups: " + (startTime - startMatchesTime));
 			
 			Iterator<GladiatorChallengeBean> it = matches.iterator();
-			log.info("GladiatorCombat Class: Starting matches");
+			if (logEnabled){log.info("GladiatorCombat Class: Starting matches");}
 			while (it.hasNext()){
 				currentMatch = it.next();
 				//creating the fighters obj by sending the gladiator bean populates all the initial variables
@@ -133,9 +133,8 @@ public class GladiatorCombat extends BaseServlet{
 					
 					round +=1;
 					
-					results_bean.initializeNewRound(round); //sets up the variables. 					
+					results_bean.initializeNewRound(round); //sets up the variables. 
 					
-
 					if (incumbant.rollInitiative() > challenger.rollInitiative()){ //winner either attacks or rests. loser defends, attacks or rests
 						determineActions(incumbant, challenger); //first param = winner, second = loser
 					} else {
@@ -158,7 +157,8 @@ public class GladiatorCombat extends BaseServlet{
 					
 				}
 				//when combat is complete, declare winner, loser, store resultbean, update ludus and gladiator stats
-				closeMatch(currentMatch);
+				results_bean.writeSummaryStats();
+				closeMatch();
 	
 				if (TESTTOGGLE){
 					write_line(req, resp, results_bean.getFightDescription());
@@ -172,14 +172,14 @@ public class GladiatorCombat extends BaseServlet{
 			log.info("Total time for matches: " + (endTime - startMatchesTime));
 			
 			tournament.createRankings();
-			
-			TournamentDataBean nextTourney = new TournamentDataBean();
-			nextTourney.saveTournament();
-			
+			if (!TESTTOGGLE){
+				TournamentDataBean nextTourney = new TournamentDataBean();
+				nextTourney.saveTournament();			
+			}			
 		} else {
 			log.info("GladiatorCombat.java - no tournament to run");
 			tournament.createRankings();
-			if (ranTournament){//ran the tournament, set it to completed, even though there were no matches, so a new tournament is needed
+			if (!TESTTOGGLE && ranTournament){//ran the tournament, set it to completed, even though there were no matches, so a new tournament is needed
 				TournamentDataBean nextTourney = new TournamentDataBean();
 				nextTourney.saveTournament();
 			}			
@@ -284,14 +284,12 @@ public class GladiatorCombat extends BaseServlet{
 		if (hitter.madeCriticalHit()){				//critical hit! Receiver attempts to resist
 			results_bean.recordCriticalHit(hitter.fighterName);
 			if (!receiver.resistCritical()){
-				results_bean.recordReceivedCritical(receiver.fighterName);
 				receiver.applyCriticalWound();
 			} else {								//receiver resisted the critical
 				results_bean.recordResistedCritical(receiver.fighterName);
 				receiver.applyNormalWound();
 			}			
 		} else {									//not a critical attack
-			results_bean.recordNormalWound(receiver.fighterName);
 			results_bean.recordNormalHit(hitter.fighterName);
 			receiver.applyNormalWound();
 		}
@@ -317,18 +315,18 @@ public class GladiatorCombat extends BaseServlet{
 			return false;
 	}
 	
-	private void closeMatch(GladiatorChallengeBean match) {
+	private void closeMatch() {
 		//update the total matches for each gladiator:
 		// declare the winner
 		//update ratings for the gladiators
 		
 		//first store their current ratings
-		long challengerRating = challenger.gldtr.getRating();
-		long incumbantRating = incumbant.gldtr.getRating();
+		long challengerRating = currentMatch.getChallenger().getRating();
+		long incumbantRating = currentMatch.getIncumbant().getRating();
 		if (challenger.status.equals("Dead") || challenger.status.equals("Concedes") ){
 			//incumbant wins
 			incumbant.gldtr.addWin(challengerRating); //adds a match to the total and increments total matches
-			match.applyIncumbantWin(); //awards the wager, if any, plus standard win amount
+			currentMatch.applyIncumbantWin(); //awards the wager, if any, plus standard win amount
 			log.info(incumbant.fighterName + " declared winner!");
 			challenger.gldtr.addLoss(incumbantRating);
 			results_bean.setWinner(incumbant.fighterName);			
@@ -339,7 +337,7 @@ public class GladiatorCombat extends BaseServlet{
 			if ( incumbant.status.equals("Dead") || incumbant.status.equals("Concedes") ){
 				//challenger wins
 				challenger.gldtr.addWin(incumbantRating); //adds a match to the total and increments total matches
-				match.applyChallengerWin();//awards the challenger with the standard amount for winning plus any wager
+				currentMatch.applyChallengerWin();//awards the challenger with the standard amount for winning plus any wager
 				incumbant.gldtr.addLoss(challengerRating);
 				log.info(challenger.fighterName + " declared winner!");
 				results_bean.setWinner(challenger.fighterName);				
@@ -350,15 +348,15 @@ public class GladiatorCombat extends BaseServlet{
 				//tie
 				challenger.gldtr.addTie(incumbantRating);				
 				incumbant.gldtr.addTie(challengerRating);
-				match.applyTie();//restores the wagered gold to available gold for each ludus
+				currentMatch.applyTie();//restores the wagered gold to available gold for each ludus
 				results_bean.setWinner("Tie");
-				log.info("Match declared a draw");
+				log.info("Match declared a tie");
 			}
 		}
 		
 		//store all data
 		if (!TESTTOGGLE){
-			match.saveChallenge();
+			currentMatch.saveChallenge();
 			challenger.gldtr.saveGladiator();
 			incumbant.gldtr.saveGladiator();
 			results_bean.saveNewResults(tournament);
@@ -377,11 +375,11 @@ public class GladiatorCombat extends BaseServlet{
 		GladiatorChallengeBean temp = new GladiatorChallengeBean();
 		
 		tournament = temp.getTournament();
-		//if (TESTTOGGLE){
+		if (TESTTOGGLE){
 			log.info("GladiatorCombat set new tournament date");
 			tournament.setEventDate(new Date());
 			tournament.saveTournament();
-		//}
+		}
 		if (tournament.checkTournamentDate()){
 			log.info("tournament scheduled for today");
 			ranTournament = true;
@@ -925,10 +923,10 @@ public class GladiatorCombat extends BaseServlet{
 			double chance = 0.0;
 			if (baseStrength > baseSpeed){
 				chance = ((AGGRESSIVE_TACTICS_BALANCE / (baseAggression + baseBloodlust)) + 
-						(baseStrength /2 )) * staminaAdjustment;
+						(baseStrength )) * staminaAdjustment;
 			} else {
 				chance = ((AGGRESSIVE_TACTICS_BALANCE / (baseAggression + baseBloodlust)) + 
-						(baseSpeed /2 )) * staminaAdjustment;
+						(baseSpeed )) * staminaAdjustment;
 			}			
 			
 			if (chance > MINIMUM_BLOCK_CHANCE){
@@ -941,7 +939,7 @@ public class GladiatorCombat extends BaseServlet{
 		private double getDodgeChance() {
 			// dodge is affected by aggression, in order to balance defensive tactics			
 			double chance = ((AGGRESSIVE_TACTICS_BALANCE / (baseAggression + baseBloodlust)) + 
-					(baseAgility + baseSpeed)/4 ) * staminaAdjustment;
+					(baseAgility + baseSpeed)/2 ) * staminaAdjustment;
 			
 			if (chance > MINIMUM_DODGE_CHANCE){
 				return chance;

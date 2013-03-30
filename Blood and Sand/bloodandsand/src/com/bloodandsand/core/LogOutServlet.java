@@ -29,6 +29,7 @@ public class LogOutServlet extends BaseServlet {
 
 		deleted = deleteCookie(resp, req, "user");
 		req.getSession().removeAttribute(userBeanData);
+		req.getSession().removeAttribute(rankingsKey);
 		
 		if (deleted){
 			resp.sendRedirect("/login");

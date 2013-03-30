@@ -30,10 +30,12 @@ public class SignUpServlet extends BaseServlet{
 	
 	Pattern validPassword = Pattern.compile("[\\W\\s^\\\\<>\\[\\]|{}]");
 	
+	private boolean logEnabled = false;
+	
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 		      throws IOException {
 		resp.sendRedirect("/admin/signup.jsp");
-		log.info("Redirect to signup.jsp");
+		if (logEnabled){log.info("Redirect to signup.jsp");}
 	}
 	
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -45,8 +47,6 @@ public class SignUpServlet extends BaseServlet{
 		errorMessageName = null;
 		errorMessagePassword = null;
 		errorMessageEmail = null;
-		
-
 		
 		//run entry validation checks
 		Boolean nameCheck = false;
@@ -63,15 +63,15 @@ public class SignUpServlet extends BaseServlet{
 			
 			if (!nameCheck){
 				userName = null;
-				log.info("Name Check Failed");
+				if (logEnabled){log.info("Name Check Failed");}
 			}
 			if (!passwordCheck){
 				password = null;
-				log.info("Password Validity Check Failed");
+				if (logEnabled){log.info("Password Validity Check Failed");}
 			}
 			
 			if (!emailCheck){
-				log.info("Email Validity Check Failed");				
+				if (logEnabled){log.info("Email Validity Check Failed");}				
 			}					
 		}
 			
@@ -82,7 +82,7 @@ public class SignUpServlet extends BaseServlet{
 			if (!nameAvailable){
 				userName = null;
 				errorMessageName="That name is already in use. Please choose another.";				
-				log.info("Name Availabilty Check Failed");
+				if (logEnabled){log.info("Name Availabilty Check Failed");}
 			}
 		}
 		//Check if email is available. If so, store it in the class
@@ -90,12 +90,12 @@ public class SignUpServlet extends BaseServlet{
 			emailAvailable = usr.setNewEmailAddress(emailAddress);
 			if (!emailAvailable){
 				errorMessageEmail = "That email address is already in use. Please choose another.";
-				log.info("Email Availabilty Check Failed");
+				if (logEnabled){log.info("Email Availabilty Check Failed");}
 			}
 		}
 		
 		if (nameCheck && emailCheck && passwordCheck && nameAvailable && emailAvailable){	
-			log.info("Verifications and validations checked. User to be saved.");
+			if (logEnabled){log.info("Verifications and validations checked. User to be saved.");}
 			try {
 				usr.setPasswordHash(password);
 			} catch (NoSuchAlgorithmException e) {
@@ -129,7 +129,7 @@ public class SignUpServlet extends BaseServlet{
 	private Boolean checkUserName(String userName){
 		if (userName == null || userName == "" || userName.length() < 4 || userName.length() > 13){
 			errorMessageName = "Please enter a user name between 4 and 13 characters.";
-			log.info("no user name");
+			if (logEnabled){log.info("no user name");}
 			return false;
 		}
 		

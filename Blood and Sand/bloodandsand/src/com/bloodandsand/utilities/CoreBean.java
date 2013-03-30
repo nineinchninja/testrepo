@@ -30,6 +30,8 @@ public abstract class CoreBean {
 	protected static int MAXIMUM_SKILL_SCORE = 50;
 	protected static int TRAINING_INCREMENT_AMOUNT = 1; //the amount a skill or attribute increases by on successful training
 	
+	protected static String[] PERSONALITIES = {"Honourable", "Crazy", "Stupid", "Serious", "Vain", "Clumsy", "Cowardly"};
+	
 	protected static String[] ATTRIBUTES = {"strength", "agility", "speed", "intelligence", "constitution", "willpower"};
 	protected static String[] WEAPONSKILLS = {"sword", "daggers", "greataxe", "greatsword", "maul", "spear", "hand to hand", "quarterstaff", };
 	

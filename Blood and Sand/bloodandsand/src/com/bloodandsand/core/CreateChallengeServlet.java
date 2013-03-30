@@ -3,6 +3,7 @@ package com.bloodandsand.core;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.RequestDispatcher;
@@ -15,10 +16,14 @@ import com.bloodandsand.beans.GladiatorChallengeBean;
 import com.bloodandsand.beans.GladiatorDataBean;
 import com.bloodandsand.beans.UserDataBean;
 import com.bloodandsand.utilities.BaseServlet;
+import com.google.appengine.api.memcache.ErrorHandlers;
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
 
 public class CreateChallengeServlet extends BaseServlet {
 	
 	protected static final Logger log = Logger.getLogger(CreateChallengeServlet.class.getName());
+	private boolean logEnabled = false;
 	/**
 	 * 
 	 */
@@ -34,13 +39,24 @@ public class CreateChallengeServlet extends BaseServlet {
 			refreshUserBean(req);	
 			// get all gladiators that the player owns that can be added
 			UserDataBean usr = (UserDataBean) sess.getAttribute(userBeanData);
-			log.info("This person has requested their fighters to create challenges: " + usr.getUserName());
+			if (logEnabled){log.info("This person has requested their fighters to create challenges: " + usr.getUserName());}
 			List<GladiatorDataBean> myChallengers = usr.ludus.getMyChallengeableGladiators();
 			
 			
 			if (myChallengers != null){
 				sess.setAttribute("MyChallengers", myChallengers);
 			}
+			//get the rankings
+			 MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+			 syncCache.setErrorHandler(ErrorHandlers.getConsistentLogAndContinue(Level.INFO));
+			 
+			 List<GladiatorDataBean> rankings = new ArrayList<GladiatorDataBean>();
+			 rankings = (ArrayList<GladiatorDataBean>) syncCache.get(rankingsKey);
+			 
+			 if (rankings == null){
+				 log.warning("No rankings found");
+			 }
+			 sess.setAttribute(rankingsKey, rankings);
 			
 			// get all gladiators that can be challenged 
 			GladiatorDataBean temp = new GladiatorDataBean();
@@ -74,11 +90,14 @@ public class CreateChallengeServlet extends BaseServlet {
 			opponent = req.getParameter("opponent");
 			challenger = req.getParameter("challenger");
 			wager = getLongFromString(req.getParameter("wagerAmount"));
-			log.info("wager amount received: " + wager);
+			if (wager <= 0){
+				wager = 0;
+			}
+			if (logEnabled){log.info("wager amount received: " + wager);}
 			if (opponent == null || challenger == null ||
 					opponents == null || usr == null){
 				write_line(req, resp, "Your request could not be processed at this time. Please try again later.");
-				log.info("Something was null when trying to create a new challenge");
+				log.warning("Something was null when trying to create a new challenge");
 			} else {
 				//need to match the challenger selected with the gladiators in the ludus, and ensure it is still available
 				for (GladiatorDataBean gladitr : usr.ludus.gladiators){
@@ -97,7 +116,7 @@ public class CreateChallengeServlet extends BaseServlet {
 				//test to ensure it worked right
 				if (challengerBean == null || opponentBean == null){
 					write_line(req, resp, "Your request could not be processed at this time. Please try again later.");
-					log.info("Challenger or opponent bean was null when trying to create a new challenge");
+					log.warning("Challenger or opponent bean was null when trying to create a new challenge");
 				} else {
 					//need to create the challenge
 					
@@ -105,12 +124,11 @@ public class CreateChallengeServlet extends BaseServlet {
 							write_line(req, resp, "You do not have enough gold to wager that amount.");
 						} else {
 							GladiatorChallengeBean chall = new GladiatorChallengeBean(challengerBean, opponentBean, wager);
-							//TODO: set challenger's ludus in the challenge
 							usr.ludus.setWager(wager);
 							usr.ludus.saveLudus();
 							
 							chall.saveNewChallenge();
-							log.info("Challenge saved");
+							if (logEnabled){log.info("Challenge saved");}
 							//need to update the user data bean and db with new stuff
 							usr.populateUserDataBean(usr.getUserName());
 							sess.setAttribute(userBeanData, usr);

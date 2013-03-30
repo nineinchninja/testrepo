@@ -48,6 +48,8 @@ public class BaseServlet extends HttpServlet {
 	
 	protected static final boolean TESTTOGGLE = false;//this turns on various testing functions, additional logging etc
 	
+	protected static int MAX_SESSION_INACTIVE_TIME = 7200;
+	
 	protected static String loginPage = "/admin/login.jsp";
 	protected static String loginRedirect = "/login";
 	protected static String loggedInRedirect = "/playerpages/myludus.jsp";

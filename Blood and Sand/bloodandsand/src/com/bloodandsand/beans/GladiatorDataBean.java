@@ -38,6 +38,8 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	 * updating gladiator skills and attributes etc
 	 * 
 	 */
+	
+	private boolean logEnabled = false;
 	private static final long serialVersionUID = -1717471076334573064L;
 	private long strength;
 	private long agility;
@@ -48,8 +50,9 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	private long bloodlust; 
 	private long aggression; 
-	private long heat; 							
-	private long consistency;
+	
+	private String personality;
+
 	
 	public String name;
 	private String gender;
@@ -59,7 +62,6 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	public long losses;
 	public long ties; 
 	public long matches; //total matches 
-	public long popularity;
 	private long rating = 0;
 	
 	private String currentTrainingFocus;
@@ -99,14 +101,13 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		this.constitution = ((Long)(thisEntity.getProperty("constitution")));
 		this.bloodlust = ((Long)(thisEntity.getProperty("bloodlust")));
 		this.aggression = ((Long)(thisEntity.getProperty("aggression")));
-		this.heat = ((Long)(thisEntity.getProperty("chattiness")));
-		this.consistency = ((Long)(thisEntity.getProperty("consistency")));
+
 		this.willpower = ((Long)(thisEntity.getProperty("willpower")));
 		this.wins = ((Long)(thisEntity.getProperty("wins")));
 		this.losses = ((Long)(thisEntity.getProperty("losses")));
 		this.ties = ((Long)(thisEntity.getProperty("ties")));
 		this.matches = ((Long)thisEntity.getProperty("matches"));
-		this.popularity = ((Long)(thisEntity.getProperty("popularity")));
+
 		this.price = ((Long)(thisEntity.getProperty("price")));
 		
 		this.status = ((String)(thisEntity.getProperty("status")));		
@@ -123,14 +124,23 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		if (thisEntity.hasProperty("ownerKey") && thisEntity.getProperty("ownerKey") != null){		
 			this.ownerKey = (Key)thisEntity.getProperty("ownerKey"); 
 		} else {
-			thisEntity.setProperty("ownerKey", findOwnerKey((String)thisEntity.getProperty("owner")));	
-			this.ownerKey = (Key)thisEntity.getProperty("ownerKey");
-			saveGladiator();
+			if (this.owner != null){
+				thisEntity.setProperty("ownerKey", findOwnerKey((String)thisEntity.getProperty("owner")));	
+				this.ownerKey = (Key)thisEntity.getProperty("ownerKey");
+				saveGladiator();
+			}
 		}
 		if (thisEntity.hasProperty("rating") && thisEntity.getProperty("rating") != null){		
 			this.rating = (Long) thisEntity.getProperty("rating"); 
 		} else {
 			thisEntity.setProperty("rating", 0);	
+			saveGladiator();
+		}
+		
+		if (thisEntity.hasProperty("personality") && thisEntity.getProperty("personality") != null){		
+			this.personality = (String) thisEntity.getProperty("personality"); 
+		} else {
+			thisEntity.setProperty("personality", getPersonality());	
 			saveGladiator();
 		}
 	}			
@@ -151,9 +161,11 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
         q.setFilter(new FilterPredicate ("userName", FilterOperator.EQUAL, property));
         Entity owner = datastore.prepare(q).asSingleEntity(); 
         if (owner != null){
-        	log.info("HERERERER " + owner.getKey());
+        	
         	return owner.getKey();
         } else {
+        	
+        	log.warning("Owner key not found");
         	return null;
         }
 	}
@@ -176,8 +188,9 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		}		
 		setBloodlust(r.nextInt(15) ); 
 		setAggression(r.nextInt(15)); 
-		setHeat(r.nextInt(10) - 6); 						
-		setConsistency(r.nextInt(10));	
+		
+		setPersonality();
+	
 
 		weaponSkills = new GladiatorWeaponSkillsBean();//creates a new bean with all weapon skills at 0
 		
@@ -188,7 +201,6 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		setLosses(0);
 		setTies(0);
 		setMatches (0);
-		setPopularity(50);
 		setName(null);
 		setGender(setGender());
 		
@@ -229,14 +241,17 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		
 		thisEntity.setProperty("bloodlust", bloodlust); 
 		thisEntity.setProperty("aggression", aggression); 
-		thisEntity.setProperty("chattiness", heat); 							
-		thisEntity.setProperty("consistency", consistency);
+		
+		if (this.personality != null){
+			thisEntity.setProperty("personality", personality);
+		} else {
+			getPersonality();
+		}
 		
 		thisEntity.setProperty("wins", wins);
 		thisEntity.setProperty("losses", losses);
 		thisEntity.setProperty("ties", ties);
 		thisEntity.setProperty("matches", matches);
-		thisEntity.setProperty("popularity", popularity);
 		
 		thisEntity.setProperty("price", price);
 		
@@ -269,7 +284,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 //		
 		
 		if (weaponSkills == null){
-			log.info("No weaponskill entity found");
+			log.warning("No weaponskill entity found");
 		}
 		setUpGladiatorEntity();
 		Transaction txn = datastore.beginTransaction();
@@ -303,7 +318,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
         Filter currentRecruits = CompositeFilterOperator.and(unowned, alive);
         q.setFilter(currentRecruits);
         int results = datastore.prepare(q).countEntities(free_recruit_check);
-        log.info("total returned: " + results);
+        if (logEnabled) {log.info("total returned: " + results);}
         return results;
 	}
 	
@@ -323,7 +338,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 			FetchOptions max_number_challenges =
 				    FetchOptions.Builder.withLimit(10);
 			results = datastore.prepare(q).asList(max_number_challenges);
-			log.info("Found " + results.size() + " challenges for " + name);
+			if (logEnabled){log.info("Found " + results.size() + " challenges for " + name);}
 			if (results.size() > 0){
 				List<GladiatorChallengeBean> challs = new ArrayList<GladiatorChallengeBean>();
 				for (Entity ent : results){
@@ -338,25 +353,25 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 								nxt.setIncumbant(this);
 								nxt.findChallenger();
 							} else {
-								log.info("No match on keys");
+								log.warning("No match on keys");
 							}							
 						}
 						challs.add(nxt);
-						log.info("added challenge to " + this.name);
+						if (logEnabled){log.info("added challenge to " + this.name);}
 					}											
 				}
 				if (challs.size() > 0){
 					this.challenges = challs;
 				}
 				
-				log.info("Added a total of " + challs.size() + " to " + name);
+				if (logEnabled){log.info("Added a total of " + challs.size() + " to " + name);}
 			}						
 		}		
 	}
 	
 	public boolean isGladiatorAvailableToChallenge(){
 		if (!this.status.equals("FIT")){
-			log.info("Gladiator is not fit");
+			if (logEnabled){log.info("Gladiator is not fit");}
 			return false;
 		}
 		
@@ -366,7 +381,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 
 		
 		if (this.name == null || this.name.equalsIgnoreCase("none")){
-			log.info("Gladiator has no name");
+			if (logEnabled){log.info("Gladiator has no name");}
 			return false;
 		}
 		boolean avail = true;
@@ -375,7 +390,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 			while (iter.hasNext()){
 				if (iter.next().getStatusEnum() == Status.ACCEPTED){
 					avail = false;
-					log.info("Gladiator has accepted a challenge");
+					if (logEnabled){log.info("Gladiator has accepted a challenge");}
 				}
 			}
 		}				
@@ -399,12 +414,12 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
         while (it.hasNext()){
         	GladiatorDataBean temp = new GladiatorDataBean(it.next());
         	if (temp.isGladiatorAvailableToChallenge() && !temp.getOwner().equals(userName)){
-        		log.info("Gladiator: " + temp.getName() + " has been added, owned by " + temp.getOwner());
+        		if (logEnabled){log.info("Gladiator: " + temp.getName() + " has been added, owned by " + temp.getOwner());}
         		gladiators.add(temp);
         	}        	
         }
         if (gladiators != null){
-        	log.info("total returned challengeable gladiators: " + gladiators.size());
+        	if (logEnabled){log.info("total returned challengeable gladiators: " + gladiators.size());}
         }
         
         return gladiators;
@@ -419,10 +434,12 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
         Filter unowned = new FilterPredicate("owner", FilterOperator.EQUAL, null);
         Filter alive = new FilterPredicate("status", FilterOperator.EQUAL, "FIT");
         Filter currentRecruits = CompositeFilterOperator.and(unowned, alive);
+        
         q.setFilter(currentRecruits);
         FetchOptions gladiator_market_check = FetchOptions.Builder.withLimit(BASE_NUMBER_OF_RECRUITS);
         List<Entity> results = datastore.prepare(q).asList(gladiator_market_check);
-        log.info("total returned available recruits: " + results.size());
+        if (logEnabled){log.info("total returned available recruits: " + results.size());}
+        
         Iterator<Entity> it = results.iterator();
         while (it.hasNext()){
         	GladiatorDataBean temp = new GladiatorDataBean(it.next());
@@ -475,7 +492,6 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	}
 	
 	public void setDataStoreKey(Key key2) {
-		// TODO Auto-generated method stub
 		this.key = key2;
 	}
 	
@@ -555,23 +571,26 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		return aggression;		
 	}
 	
-	public void setHeat (long chattiness) {
-		this.heat = chattiness;
-		thisEntity.setProperty("heat", heat);
+	public String getPersonality(){
+		if (this.personality == null){
+			setPersonality();
+		} 
+		
+		return this.personality;
+			
 	}
 	
-	public long getHeat () {		
-		return heat;		
-	}	
-	
-	public void setConsistency (long consistency) {
-		this.consistency = consistency;
-		thisEntity.setProperty("consistency", consistency);
+	public void setPersonality(){
+		Random r = new Random();
+		this.personality = PERSONALITIES[r.nextInt(PERSONALITIES.length)];
+		
 	}
 	
-	public long getConsistency () {		
-		return consistency;		
-	}		
+	public void setPersonality(String persnlty){
+		this.personality = persnlty;
+		
+	}
+	
 	
 	public void setWins (long wins) {
 		this.wins = wins;
@@ -607,17 +626,8 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public long getMatches(){
 		return matches;
-	}
-	
-	public void setPopularity (long popularity) {
-		this.popularity = popularity;
-		thisEntity.setProperty("popularity", popularity);
-	}
-	
-	public long getPopularity () {		
-		return popularity;		
 	}	
-	
+
 	public void setPrice (long price) {
 		this.price = price;
 		thisEntity.setProperty("price", price);
@@ -720,14 +730,15 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		List<GladiatorDataBean> gladiators = new ArrayList<GladiatorDataBean>(); 
 		Query q = new Query(gladiatorEntity);
 		
-        //Filter owned = new FilterPredicate("owner", FilterOperator.NOT_EQUAL, null);//only train those who are owned by a player
         Filter alive = new FilterPredicate("status", FilterOperator.EQUAL, "FIT"); //those injured or dead cannot train
         Filter assignedTraining = new FilterPredicate("currentTrainingFocus", FilterOperator.NOT_EQUAL, "None");
         Filter currentRecruits = CompositeFilterOperator.and( alive, assignedTraining);
         q.setFilter(currentRecruits);
+        
         FetchOptions gladiator_training_check = FetchOptions.Builder.withChunkSize(BASE_NUMBER_OF_TRAINING_GLADIATORS);
         List<Entity> results = datastore.prepare(q).asList(gladiator_training_check);
-        log.info("total returned available gladiators for training: " + results.size());
+        if (logEnabled){log.info("total returned available gladiators for training: " + results.size());}
+        
         Iterator<Entity> it = results.iterator();
         while (it.hasNext()){
         	GladiatorDataBean temp = new GladiatorDataBean(it.next());
