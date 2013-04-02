@@ -26,8 +26,7 @@ import com.bloodandsand.utilities.BaseServlet;
 public class ApplyName extends BaseServlet {
 	
 
-	public void doGet(HttpServletRequest req, HttpServletResponse resp)
-		      throws IOException, ServletException {
+	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
 		HttpSession sess = req.getSession();
 		if (!checkLogin(req) || sess.getAttribute(userBeanData) == null){			
 			resp.sendRedirect(loginPage);

@@ -14,6 +14,8 @@ import javax.servlet.http.HttpSession;
 import com.bloodandsand.beans.MatchResultBean;
 import com.bloodandsand.beans.TournamentDataBean;
 import com.bloodandsand.utilities.BaseServlet;
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
 
 public class MatchResultsServlet extends BaseServlet {
 	
@@ -25,17 +27,38 @@ public class MatchResultsServlet extends BaseServlet {
 	
 	private boolean logEnabled = false;
 
-	public void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws IOException, ServletException{
+	public void doGet(HttpServletRequest req, HttpServletResponse resp){
 		HttpSession sess = req.getSession();
 		if (!checkLogin(req) || req.getSession().getAttribute(userBeanData) == null){			
-			resp.sendRedirect(loginPage);
+			try {
+				resp.sendRedirect(loginPage);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		} else {
 			refreshUserBean(req);
-			List<TournamentDataBean> tournaments = getMatchResults();
+			MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+			
+			List<TournamentDataBean> tournaments = new ArrayList<TournamentDataBean>();
+			tournaments = (List<TournamentDataBean>) syncCache.get(resultsKey);
+			if (tournaments == null && !syncCache.contains(resultsKey)){
+				tournaments = getMatchResults();
+			} else {
+				if (TESTTOGGLE){log.info("Results served from memcache.");}
+			}
+					
 			sess.setAttribute(resultsBeanData, tournaments);
 			RequestDispatcher rd = req.getRequestDispatcher(matchResultsJsp);
-			rd.forward(req, resp);
+			try {
+				rd.forward(req, resp);
+			} catch (ServletException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}				
 	}
 	

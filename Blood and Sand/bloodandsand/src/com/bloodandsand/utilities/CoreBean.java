@@ -21,6 +21,9 @@ public abstract class CoreBean {
 	
 	protected static String rankingsKey = "RANKINGS";
 	
+	protected static String userKey = "USER||";
+	protected static String gladsRecruitsKey = "RECRUITSKEYS";
+	
 	
 	protected static int BASE_NUMBER_OF_RECRUITS = 25;//used to limit the query for the market place
 	protected static int BASE_NUMBER_OF_TRAINING_GLADIATORS = 1000; //used to create the query for applying training
@@ -29,6 +32,7 @@ public abstract class CoreBean {
 	protected static int MAXIMUM_ATTRIBUTE_SCORE = 50;
 	protected static int MAXIMUM_SKILL_SCORE = 50;
 	protected static int TRAINING_INCREMENT_AMOUNT = 1; //the amount a skill or attribute increases by on successful training
+	protected static int MAX_GLADIATORS_ALLOWED = 10;
 	
 	protected static String[] PERSONALITIES = {"Honourable", "Crazy", "Stupid", "Serious", "Vain", "Clumsy", "Cowardly"};
 	

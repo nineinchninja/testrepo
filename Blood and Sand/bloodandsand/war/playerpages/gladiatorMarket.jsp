@@ -32,7 +32,7 @@
 	<th class="table-header">Willpower</th>
 	<th class="table-header">Price (gold)</th>
 </tr>
-<c:forEach var="gladiator" items='${Recruits.gladiators}' varStatus="count">
+<c:forEach var="gladiator" items='${Recruits}' varStatus="count">
 <tr >
 <form action="/buygladiator" method="POST">
 	<input type="hidden" name="gladKey" value='${gladiator.key}'/>

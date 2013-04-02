@@ -102,8 +102,7 @@ public class GladiatorCombat extends BaseServlet{
 	private MatchResultBean results_bean;
 	private TournamentDataBean tournament;
 		
-	public void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws IOException{
+	public void doGet(HttpServletRequest req, HttpServletResponse resp){
 		long startTime = + System.currentTimeMillis();
 		log.info("Start of getting matchups: " + startTime);
 		
@@ -120,7 +119,7 @@ public class GladiatorCombat extends BaseServlet{
 				//creating the fighters obj by sending the gladiator bean populates all the initial variables
 				challenger = new Fighter(currentMatch.getChallenger());//this also calculates all initial variables and sets up the action table
 				incumbant = new Fighter(currentMatch.getIncumbant());
-				results_bean = new MatchResultBean(currentMatch.getChallenger(), currentMatch.getIncumbant(), challenger.weapon, incumbant.weapon);
+				results_bean = new MatchResultBean(currentMatch.getChallenger(), currentMatch.getIncumbant(), challenger.weapon, incumbant.weapon, currentMatch.getWager());
 				combatComplete = false;
 				round = 0;	
 				results_bean.describeMatchStart();
@@ -171,7 +170,9 @@ public class GladiatorCombat extends BaseServlet{
 			log.info("Total elapsed time: " + (endTime - startTime));
 			log.info("Total time for matches: " + (endTime - startMatchesTime));
 			
+			//functions for updating memcache with common queries
 			tournament.createRankings();
+			updateResultsCache();
 			if (!TESTTOGGLE){
 				TournamentDataBean nextTourney = new TournamentDataBean();
 				nextTourney.saveTournament();			
@@ -452,7 +453,7 @@ public class GladiatorCombat extends BaseServlet{
 
 			baseWeaponSkill = gldtr.getWeaponSkill(weapon);			// most skill in, and default to sword
 			
-			fighterName = gldtr.getName();
+			fighterName = gldtr.getCapitalizedName();
 
 			baseStrength = gldtr.getStrength();
 			baseAgility = gldtr.getAgility();

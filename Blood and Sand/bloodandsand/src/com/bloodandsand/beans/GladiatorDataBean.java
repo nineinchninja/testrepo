@@ -4,9 +4,11 @@
 package com.bloodandsand.beans;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.logging.Logger;
 
@@ -15,6 +17,7 @@ import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EmbeddedEntity;
+import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
@@ -24,6 +27,9 @@ import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
+import com.google.appengine.api.datastore.TransactionOptions;
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
 
 /**
  * @author Andrew Hayward
@@ -208,25 +214,38 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		setOwner(null, null);
 		setRating(0);
 		setPrice();
+		setUpGladiatorEntity();
 	}
 	
-	public void saveNewGladiator() {//this is for saving a new gladiator		
-		
+	public void saveNewGladiator(){	
+
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		
-		setUpGladiatorEntity();
+		if (weaponSkills == null){
+			log.warning("No weaponskill entity found");
+		}
+		setUpGladiatorEntity();		
+		
 		Transaction txn = datastore.beginTransaction();
-		try {
-			
-			datastore.put(thisEntity);	
-			
+		
+		try {	
+			datastore.put(thisEntity);				
 			txn.commit();
 		} finally {	
 		    if (txn.isActive()) {
 		        txn.rollback();
-		        log.warning("Save New Gladiator transaction failed: rolled back");
+		        log.warning("Save Gladiator transaction failed: rolled back");
 		    }
-		}		
+		}	
+	}
+	
+	
+	public void saveNewGladiatorsToCache(List<Entity> newGlads) {//this is for saving a new gladiator	
+		
+		MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+		
+		syncCache.put(gladsRecruitsKey, newGlads);	
+		
 	}
 	
 	private void setUpGladiatorEntity(){
@@ -279,14 +298,17 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 	public void saveGladiator() {//updating an existing gladiator after making some changes
 
-		//Key gladiatorKey = KeyFactory.stringToKey(keyIn); //which looks the gladiator up in the ds and updates it		
+		MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-//		
 		
 		if (weaponSkills == null){
 			log.warning("No weaponskill entity found");
 		}
 		setUpGladiatorEntity();
+		
+		syncCache.put(key, thisEntity);
+		
+		
 		Transaction txn = datastore.beginTransaction();
 		
 		try {	
@@ -301,26 +323,29 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	}
 
 	public Entity findGladiatorEntityByKey(Key gladKey){
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Query q = new Query(gladiatorEntity);
 
-        q.setFilter(new FilterPredicate (Entity.KEY_RESERVED_PROPERTY, FilterOperator.EQUAL, gladKey));
-        Entity results = datastore.prepare(q).asSingleEntity();        
-        return results;
+		Entity result = null;
+		result = getGladiatorFromCache(gladKey);
+		if (result == null){
+			//gladiator not found in cache
+			log.warning("Gladiator not foundin cache. Doing it the hard way." );
+			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+			Query q = new Query(gladiatorEntity);
+
+	        //q.setFilter(new FilterPredicate (Entity.KEY_RESERVED_PROPERTY, FilterOperator.EQUAL, gladKey));
+	        try {
+				result = datastore.get(gladKey);
+				MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+				syncCache.put(result.getKey(), result);
+			} catch (EntityNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}       	        
+		}
+		
+		return result;		
+		
 	}	
-	
-	public int countAvailableGladiators(FetchOptions free_recruit_check){//used in the FreshRecruits cron job
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Query q = new Query(gladiatorEntity);
-        q.isKeysOnly();
-        Filter unowned = new FilterPredicate("owner", FilterOperator.EQUAL, null);
-        Filter alive = new FilterPredicate("status", FilterOperator.EQUAL, "FIT");
-        Filter currentRecruits = CompositeFilterOperator.and(unowned, alive);
-        q.setFilter(currentRecruits);
-        int results = datastore.prepare(q).countEntities(free_recruit_check);
-        if (logEnabled) {log.info("total returned: " + results);}
-        return results;
-	}
 	
 	public void getGladiatorsChallenges(){
 		//first ensure the key is available to search by
@@ -423,30 +448,7 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
         }
         
         return gladiators;
-	}
-	
-	
-	public List<GladiatorDataBean> getGladiatorsOnSale(){//used in the gladiator market
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		List<GladiatorDataBean> gladiators = new ArrayList<GladiatorDataBean>(); 
-		Query q = new Query(gladiatorEntity);
-		
-        Filter unowned = new FilterPredicate("owner", FilterOperator.EQUAL, null);
-        Filter alive = new FilterPredicate("status", FilterOperator.EQUAL, "FIT");
-        Filter currentRecruits = CompositeFilterOperator.and(unowned, alive);
-        
-        q.setFilter(currentRecruits);
-        FetchOptions gladiator_market_check = FetchOptions.Builder.withLimit(BASE_NUMBER_OF_RECRUITS);
-        List<Entity> results = datastore.prepare(q).asList(gladiator_market_check);
-        if (logEnabled){log.info("total returned available recruits: " + results.size());}
-        
-        Iterator<Entity> it = results.iterator();
-        while (it.hasNext()){
-        	GladiatorDataBean temp = new GladiatorDataBean(it.next());
-        	gladiators.add(temp);
-        }
-        return gladiators;
-	}
+	}	
 	
 	public void setChallenges(List<GladiatorChallengeBean> challenges){
 		this.challenges = challenges;
@@ -725,31 +727,38 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		}
 	}
 	
-	public List<GladiatorDataBean> getGladiatorsForTraining(){
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		List<GladiatorDataBean> gladiators = new ArrayList<GladiatorDataBean>(); 
-		Query q = new Query(gladiatorEntity);
-		
-        Filter alive = new FilterPredicate("status", FilterOperator.EQUAL, "FIT"); //those injured or dead cannot train
-        Filter assignedTraining = new FilterPredicate("currentTrainingFocus", FilterOperator.NOT_EQUAL, "None");
-        Filter currentRecruits = CompositeFilterOperator.and( alive, assignedTraining);
-        q.setFilter(currentRecruits);
-        
-        FetchOptions gladiator_training_check = FetchOptions.Builder.withChunkSize(BASE_NUMBER_OF_TRAINING_GLADIATORS);
-        List<Entity> results = datastore.prepare(q).asList(gladiator_training_check);
-        if (logEnabled){log.info("total returned available gladiators for training: " + results.size());}
-        
-        Iterator<Entity> it = results.iterator();
-        while (it.hasNext()){
-        	GladiatorDataBean temp = new GladiatorDataBean(it.next());
-        	gladiators.add(temp);
-        }
-        
-        return gladiators;
+	private Entity getGladiatorFromCache(){
+		MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+		Entity results = (Entity)syncCache.get(key);
+		if (!syncCache.contains(key) || results == null){
+			return null;
+		} else {
+			return results;
+		}
+	}
+	private Entity getGladiatorFromCache(Key keyIn){
+		MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+		Entity results = (Entity)syncCache.get(keyIn);
+		if (!syncCache.contains(keyIn) || results == null){
+			return null;
+		} else {
+			return results;
+		}
 	}
 	
+	private void removePurchasedGladiatorFromMarket(){
+		MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+		
+		List<Entity> recruits = (List<Entity>) syncCache.get(gladsRecruitsKey);
+		if (recruits.remove(thisEntity)){
+			if(logEnabled){log.info("Found and deleted gladiator from recruits.");}
+		}
+		
+		syncCache.put(gladsRecruitsKey, recruits);
+	}	
+	
 	public void attemptTraining() {
-		log.info(name + " owned by " + owner + " attempted to train " + currentTrainingFocus);
+		if (logEnabled){log.info(name + " owned by " + owner + " attempted to train " + currentTrainingFocus);}
 		//first check to see if the stat being trained is at the max cap
 		//then attempt against the soft cap for all stats. If successful
 		//then attempt against the cap for that stat. If successful, increment
@@ -913,6 +922,10 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 		return name;
 	}
 	
+	public Entity getEntity(){
+		return this.thisEntity;
+	}
+	
 	public String getCapitalizedName(){
 		if (name!= null){
 			return capitalizeWord(name);
@@ -924,6 +937,9 @@ public class GladiatorDataBean extends CoreBean implements java.io.Serializable 
 	
 
 	public void setNewOwner(String owner, String userKey) {//When a gladiator is purchased, pass the owner name and the
+		
+		//first remove it from the available listings
+		removePurchasedGladiatorFromMarket();
 		this.owner = owner.toLowerCase();	
 		this.ownerKey = KeyFactory.stringToKey(userKey);// key a a string to this function.
 		

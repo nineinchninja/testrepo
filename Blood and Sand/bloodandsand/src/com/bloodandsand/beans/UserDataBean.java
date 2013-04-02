@@ -13,6 +13,7 @@ import com.bloodandsand.utilities.PasswordHash;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
@@ -21,6 +22,8 @@ import com.google.appengine.api.datastore.Transaction;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
 
 public class UserDataBean extends CoreBean implements java.io.Serializable {
 	/**
@@ -62,7 +65,7 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 		userName = (String)thisEntity.getProperty("userName");
 		userLevel = (String) thisEntity.getProperty("userLevel");	
 		emailAddress = (String) thisEntity.getProperty("email");
-		lastSeen = (Date)thisEntity.getProperty("lastSeen");
+		//lastSeen = (Date)thisEntity.getProperty("lastSeen");
 		createdDate = (Date)thisEntity.getProperty("createdDate");
 		key = thisEntity.getKey();
 		passwordHash = (String) thisEntity.getProperty("passwordHash");
@@ -104,7 +107,6 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 			setUpBean();
 			setLastSeen(new Date());
 			return true;
-
 		}
 	}
 		
@@ -156,23 +158,25 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 	public Boolean saveNewUser(){
 		//saves the user assuming that all properties have been set
 		createdDate = new Date();
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();			
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();	
+		MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
 		
-		if (thisEntity == null){
-			setUpEntity();
-		}
+		//if (thisEntity == null){
+		setUpEntity();
+		//}
+		
 		Entity newLudus = new Entity(ludusEntity, thisEntity.getKey());
 		if (passwordHash == null || passwordHash == "" ||
 				userName == null || userName == "" ||
-				emailAddress == null    || emailAddress ==  ""
-				){
-			log.info("Properties missing. User not saved");
-		
+				emailAddress == null    || emailAddress ==  ""){
+			
+			log.info("Properties missing. User not saved");		
 			return false;
-		}else{			
+		}else{
+			
 			Transaction txn = datastore.beginTransaction();
 			try {											
-				setUpEntity();
+
 			    datastore.put(thisEntity);
 				//create a new ludus for the new user	
 			    newLudus.setProperty("availableGold", 100);
@@ -185,7 +189,10 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 			        txn.rollback();
 			        log.warning("Save New User transaction failed: rolled back");
 			    }
-			}					
+			}	
+			key = thisEntity.getKey();
+			//put the name and key in memcache
+			syncCache.put(userKey + userName, thisEntity.getKey());
 			return true;
 		}
 	}
@@ -207,7 +214,7 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 		}
 	}
 	
-	public Boolean attemptLogin(String userName, String pwd) throws NoSuchAlgorithmException, InvalidKeySpecException {
+	public Boolean attemptLogin(String userName, String pwd) throws NoSuchAlgorithmException, InvalidKeySpecException, EntityNotFoundException {
 		//wrapper for the find user and check password functions
 		//Entity userExists = null;
 		Boolean passwordCorrect = false;
@@ -234,12 +241,19 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 	
 	public void setDataStoreKey(Key keyIn){
 		this.key = keyIn;
-	}
+	}	
 	
-	
-	public void setPasswordHash(String pwd) throws NoSuchAlgorithmException, InvalidKeySpecException{
-		passwordHash = PasswordHash.createHash(pwd);
-		thisEntity.setProperty("passwordHash", pwd);		
+	public void setPasswordHash(String pwd) {
+		try {
+			passwordHash = PasswordHash.createHash(pwd);
+			thisEntity.setProperty("passwordHash", pwd);
+		} catch (NoSuchAlgorithmException e) {
+			log.warning("New user password not saved: No such algorithm Exception.");
+			e.printStackTrace();
+		} catch (InvalidKeySpecException e) {
+			log.warning("New user password not saved: Invalid Key Spec Exception.");
+			e.printStackTrace();
+		}				
 	}
 	
 	public void setLastSeen(Date lstSeen){
@@ -272,13 +286,40 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 
 	}
 	public Entity findUserEntityByName(String name){//a general function for finding users. Probably should be moved to baseServlet
+		//first check memcache to get key
+		
+		MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		//Key accountKey = KeyFactory.createKey("account", accountGroup);	
 		Query q = new Query(accountEntity);
+		Entity results = null;
+		if (key == null){//if this is a simple refresh, the key should be available
+			
+			key = (Key) syncCache.get(userKey + name);//if not, try memcache first
+			if (key == null || !syncCache.contains(userKey + name)){//didn't find in memcache, so doing the more expensive way
+				
+				log.warning("User not in cache. Using database query. ");			
 
-        q.setFilter(new FilterPredicate ("userName", FilterOperator.EQUAL, name.toLowerCase()));
-        Entity results = datastore.prepare(q).asSingleEntity();
-        
+		        q.setFilter(new FilterPredicate ("userName", FilterOperator.EQUAL, name.toLowerCase()));
+		        results = datastore.prepare(q).asSingleEntity();
+			        if (results!= null){
+			        	syncCache.put(userKey + name, results.getKey());
+			        	log.info("Added user to cache.");
+			        } else {
+			        	log.info("Can't find user. ");
+			        }
+				} else {
+					log.info("HEREEERERE" + key.toString());
+					//found the user in the cache, using key for more efficient query
+					try {
+						results = datastore.get(key);
+						log.info("Found user in cache. ");
+					} catch (EntityNotFoundException e) {
+						log.warning("Found user key in cache, didn't find user in db.");
+						e.printStackTrace();
+					}
+				}
+		}
         return results;
 	}	
 	
@@ -298,21 +339,28 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 	
 	public Boolean setNewUserName(String usrname){
 		//checks to see if the name is available
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-	
-		Query q = new Query(accountEntity);
-        q.isKeysOnly();
-        q.setFilter(new FilterPredicate ("userName", FilterOperator.EQUAL, usrname));
-    	FetchOptions username_search =
-    		    FetchOptions.Builder.withLimit(5);
-    	
-        int results = datastore.prepare(q).countEntities(username_search);
-        if (results > 0){
-        	return false;
-        }
-        //if the query returns 0 results, set the user name variable
-        setUserName(usrname);        
-		return true;
+		//first check memcache
+		MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+		
+		if (syncCache.contains(userKey + usrname)){
+			return false;
+		} else {//now try the database			
+			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		
+			Query q = new Query(accountEntity);
+	        q.isKeysOnly();
+	        q.setFilter(new FilterPredicate ("userName", FilterOperator.EQUAL, usrname));
+	    	FetchOptions username_search =
+	    		    FetchOptions.Builder.withLimit(5);
+	    	
+	        int results = datastore.prepare(q).countEntities(username_search);
+	        if (results > 0){
+	        	return false;
+	        }
+	        //if the query returns 0 results, set the user name variable
+	        setUserName(usrname);        
+			return true;
+		}
 	}
 	
 	public String getCreatedDate(){
@@ -347,13 +395,13 @@ public class UserDataBean extends CoreBean implements java.io.Serializable {
 	
 	public List<Entity> getUsersGladiators(String usrname){
 		List<Entity> gladiators = null;		
-		//Key gladKey = KeyFactory.createKey(gladiatorKindName, gladiatorGroup);	
+		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Query q = new Query(gladiatorEntity);
-        Filter u = new FilterPredicate("owner", FilterOperator.EQUAL, usrname);
+        Filter u = new FilterPredicate("ownerKey", FilterOperator.EQUAL, key);
         q.setFilter(u);
     	FetchOptions user_gladiator_search =
-    		    FetchOptions.Builder.withLimit(5);
+    		    FetchOptions.Builder.withLimit(BASE_NUMBER_OF_CHALLENGEABLE_GLADIATORS);
         gladiators = datastore.prepare(q).asList(user_gladiator_search);
 		
 		return gladiators;

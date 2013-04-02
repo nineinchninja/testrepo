@@ -5,6 +5,7 @@ package com.bloodandsand.core;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -42,24 +43,23 @@ public class BuyGladiator extends BaseServlet{
 		} else {
 			String gladKey = req.getParameter("gladKey");
 			log.info(gladKey);
-			LudusDataBean recruits = (LudusDataBean)req.getSession().getAttribute("Recruits");
+			List<GladiatorDataBean> recruits = (List<GladiatorDataBean>)req.getSession().getAttribute("Recruits");
 			if (gladKey == null || recruits == null){//if data didn't get passed correctly, 
 				log.warning("BuyGladiator.class: key value or bean not available");				
 				write_line(req, resp, "Your request could not be processed at this time. Please try again later.");
 			} else {
-					Iterator<GladiatorDataBean> gldtrs = recruits.getGladiators().iterator();
-					GladiatorDataBean selected = new GladiatorDataBean();
-					Boolean test = false;
-					while (gldtrs.hasNext() && !test){
-						selected = gldtrs.next();
-						if (selected.getKey().equals(gladKey)){
-							test = true;
-							log.warning("BuyGladiator.java: Key found in list of available gladiators:" + selected.getKey());
-						}
+				GladiatorDataBean selected = new GladiatorDataBean();
+					
+				Boolean test = false;
+				for (GladiatorDataBean x : recruits){
+					if (x.getKey().equals(gladKey)){
+						test = true;
+						selected = x;
 					}
+				}
+
 				if (!test){
 						log.warning("BuyGladiator.java: key value or bean not available");
-						resp.sendRedirect(loginRedirect);
 						write_line(req, resp, "Your request could not be processed at this time. Please try again later.");
 				} else {
 						UserDataBean usr = (UserDataBean)req.getSession().getAttribute(userBeanData);
@@ -70,14 +70,19 @@ public class BuyGladiator extends BaseServlet{
 								if (usr.ludus.gladiators.size() >= MAX_GLADIATORS_ALLOWED){
 									if (logEnabled){log.info("BuyGladiator.java: User attempted to hold more than maximum number of gladiators");}
 									write_line(req, resp, "You have the maximum number of gladiators already.");
-								} else {
-									selected.setNewOwner((String)req.getSession().getAttribute("username"), (String)usr.getDataStoreKey());//with the added key string it is saved to the datastore
-									usr.ludus.addNewGladiator(selected);//update the client so as to show the new gladiator when returning to home page
-									usr.ludus.updateAvailableGold(-(selected.getPrice()));
-									usr.ludus.saveLudus();
-									req.getSession().setAttribute(userBeanData, usr);
-									req.getSession().setAttribute(userDataRefresh, System.currentTimeMillis());
-									resp.sendRedirect(loginRedirect);
+								} else {//isn't at max number of gladiators
+									if (usr.ludus.getAvailableGold() < selected.getPrice()){
+										if (logEnabled){log.info("BuyGladiator.java: User attempted to hold more than maximum number of gladiators");}
+										write_line(req, resp, "You have insufficient gold available for the purchase.");
+									} else {// has enough cold
+										selected.setNewOwner((String)req.getSession().getAttribute("username"), (String)usr.getDataStoreKey());//with the added key string it is saved to the datastore
+										usr.ludus.addNewGladiator(selected);//update the client so as to show the new gladiator when returning to home page
+										usr.ludus.updateAvailableGold(-(selected.getPrice()));
+										usr.ludus.saveLudus();
+										req.getSession().setAttribute(userBeanData, usr);
+										req.getSession().setAttribute(userDataRefresh, System.currentTimeMillis());
+										resp.sendRedirect(loginRedirect);
+									}	
 								}
 						}
 						

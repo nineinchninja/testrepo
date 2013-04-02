@@ -59,6 +59,7 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 		thisEntity = t;
 		setUpBean();
 		if (existing){
+			if (TESTTOGGLE){log.info("Getting results from creator call;");}
 			getAllTournamentChallenges();
 			getAllTournamentMatchResults();
 		}
@@ -192,10 +193,15 @@ public class TournamentDataBean extends CoreBean implements java.io.Serializable
 		this.challenges = challenges;
 		//these aren't stored with the entity
 	}
+	
+	public List<MatchResultBean> getResults(){
+		return this.results;
+	}
 
-	public List<MatchResultBean> getResults() {
+	public List<MatchResultBean> getAllResults() {
 		if (results == null || results.size() == 0){
 			getAllTournamentMatchResults();
+			if (TESTTOGGLE){log.info("Getting results from getResults().");}
 		}
 		return results;
 	}

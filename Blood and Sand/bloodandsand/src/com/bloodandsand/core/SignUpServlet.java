@@ -16,6 +16,8 @@ import java.util.regex.*;
 
 import com.bloodandsand.beans.UserDataBean;
 import com.bloodandsand.utilities.*;
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
 
 @SuppressWarnings("serial")
 public class SignUpServlet extends BaseServlet{
@@ -30,7 +32,7 @@ public class SignUpServlet extends BaseServlet{
 	
 	Pattern validPassword = Pattern.compile("[\\W\\s^\\\\<>\\[\\]|{}]");
 	
-	private boolean logEnabled = false;
+	private boolean logEnabled = true;
 	
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 		      throws IOException {
@@ -96,21 +98,12 @@ public class SignUpServlet extends BaseServlet{
 		
 		if (nameCheck && emailCheck && passwordCheck && nameAvailable && emailAvailable){	
 			if (logEnabled){log.info("Verifications and validations checked. User to be saved.");}
-			try {
-				usr.setPasswordHash(password);
-			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
-				log.severe("hash function failed");
-				e.printStackTrace();
-			} catch (InvalidKeySpecException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				log.severe("hash function failed");
-			}
+			usr.setPasswordHash(password);
 
 			usr.setStatus("Active");
 			usr.setUserLevel("Normal");
-			usr.saveNewUser(); //saves the user data and creates a new ludus
+			usr.saveNewUser(); //saves the user data and creates a new ludus			
+
 			req.getSession().setAttribute("username", userName);
 			resp.sendRedirect(loginUrl);
 

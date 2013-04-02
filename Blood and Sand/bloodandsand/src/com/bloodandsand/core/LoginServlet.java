@@ -4,6 +4,7 @@
 package com.bloodandsand.core;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -12,6 +13,7 @@ import javax.servlet.http.*;
 import com.bloodandsand.beans.GladiatorDataBean;
 import com.bloodandsand.beans.UserDataBean;
 import com.bloodandsand.utilities.*;
+import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.memcache.ErrorHandlers;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
@@ -39,20 +41,32 @@ public class LoginServlet extends BaseServlet {
 	
 	
 	//class that handles all login requests. All failed authentication checks should be directed here
-	public void doGet(HttpServletRequest req, HttpServletResponse resp)
-		      throws IOException, ServletException {
+	public void doGet(HttpServletRequest req, HttpServletResponse resp) {
 		//check for user cookie and session
 		//if yes to both, redirect to user page
 		//if no, redirect to login.html
 		
 		if (checkLogin(req) && req.getSession().getAttribute(userBeanData) != null){
-			refreshUserBean(req);
-			//resp.sendRedirect(loggedInRedirect);
+				refreshUserBean(req);
+
 			
 			RequestDispatcher rd = req.getRequestDispatcher(loggedInRedirect);
-			 rd.forward(req, resp);
+			 try {
+				rd.forward(req, resp);
+			} catch (ServletException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		} else {
-			resp.sendRedirect(loginPage);
+			try {
+				resp.sendRedirect(loginPage);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -74,6 +88,10 @@ public class LoginServlet extends BaseServlet {
 			// TODO Auto-generated catch block
 			log.warning("invalid key at login");
 			e.printStackTrace();
+		} catch (EntityNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			log.warning("Entity not found when searching by key");
 		}
 
 		 if (login){
@@ -84,9 +102,10 @@ public class LoginServlet extends BaseServlet {
 			 sess.setAttribute("capitalizedName", capitalizeWord(username));
 			 sess.setAttribute("nextTournament", getNextTournamentDate());
 			 
-			 boolean check = u.populateUserDataBean(username);
-			 if (check){
-				 
+			 boolean check = false;
+			 check = u.populateUserDataBean(username);
+
+			 if (check){				 
 				 
 				 sess.setAttribute(userBeanData, u);
 				 sess.setAttribute(userDataRefresh, System.currentTimeMillis());

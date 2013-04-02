@@ -33,12 +33,12 @@
 		<url-pattern>/buygladiator</url-pattern>
 	</servlet-mapping>
 	<servlet>
-		<servlet-name>SetRankings</servlet-name>
-		<servlet-class>com.bloodandsand.core.SetRankings</servlet-class>
+		<servlet-name>CacheRefreshServlet</servlet-name>
+		<servlet-class>com.bloodandsand.core.CacheRefreshServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
-		<servlet-name>SetRankings</servlet-name>
-		<url-pattern>/cron/setrankings</url-pattern>
+		<servlet-name>CacheRefreshServlet</servlet-name>
+		<url-pattern>/cron/refreshcache</url-pattern>
 	</servlet-mapping>
 	
 	<servlet>

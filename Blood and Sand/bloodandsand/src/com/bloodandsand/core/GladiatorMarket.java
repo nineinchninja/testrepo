@@ -4,6 +4,8 @@
 package com.bloodandsand.core;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -14,6 +16,7 @@ import javax.servlet.http.HttpSession;
 import com.bloodandsand.beans.GladiatorDataBean;
 import com.bloodandsand.beans.LudusDataBean;
 import com.bloodandsand.utilities.BaseServlet;
+import com.google.appengine.api.datastore.Entity;
 
 /**
  * @author Andrew Hayward
@@ -34,9 +37,16 @@ public class GladiatorMarket extends BaseServlet{
 			resp.sendRedirect(loginPage);
 		} else {
 			if (logEnabled){log.info("starting search for recruits");}
-			GladiatorDataBean temp = new GladiatorDataBean();
-			LudusDataBean availableRecruits = new LudusDataBean();//this is a bit of a hack, but it works for now. Using a ludus object to hold all of the
-			availableRecruits.setGladiators(temp.getGladiatorsOnSale());// gladiators in the market
+			
+			List<Entity> results = getGladiatorsOnSale();// gladiators in the market
+			List<GladiatorDataBean> availableRecruits = new ArrayList<GladiatorDataBean>(); 
+			if (results != null){
+				for (Entity ent : results){
+					GladiatorDataBean temp = new GladiatorDataBean(ent);
+					availableRecruits.add(temp);
+				}
+			}	
+			
 			HttpSession sess = req.getSession();			
 			sess.setAttribute("Recruits", availableRecruits);
 			RequestDispatcher rd = req.getRequestDispatcher(gladiatorMarketJsp);

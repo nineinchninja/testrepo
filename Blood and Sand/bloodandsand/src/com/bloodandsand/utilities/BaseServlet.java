@@ -6,25 +6,34 @@ import java.io.UnsupportedEncodingException;
 import javax.servlet.http.*;
 import javax.servlet.*;
 
+import com.bloodandsand.beans.GladiatorDataBean;
 import com.bloodandsand.beans.UserDataBean;
 import com.bloodandsand.beans.TournamentDataBean;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
+import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.PropertyProjection;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Transaction;
+import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.appengine.api.datastore.Query.SortDirection;
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,6 +81,11 @@ public class BaseServlet extends HttpServlet {
 	protected static String resultsDetail = "ResultsDetailData";
 	
 	protected static String rankingsKey = "RANKINGS";
+	protected static String resultsKey = "RESULTS";
+	protected static String gladsRecruitsKey = "RECRUITSKEYS";
+	
+	protected static int BASE_NUMBER_OF_TRAINING_GLADIATORS = 1000;
+	protected static int BASE_NUMBER_OF_RECRUITS = 20;
 	
 	protected static long USER_DATA_REFRESH_TIME = 600000;
 	
@@ -88,17 +102,20 @@ public class BaseServlet extends HttpServlet {
 	
 	protected static final Logger log = Logger.getLogger(BaseServlet.class.getName());
 	
-	public void doGet(HttpServletRequest req, HttpServletResponse resp)
-		      throws ServletException, IOException {
+	public void doGet(HttpServletRequest req, HttpServletResponse resp)  throws IOException, ServletException{
 
 
 	}
 	
-	public void write_line(HttpServletRequest req, HttpServletResponse resp, String content_string)
-			throws IOException {
+	public void write_line(HttpServletRequest req, HttpServletResponse resp, String content_string)	 {
 		//Basic write /print line function, used primarily for error message pages
 		resp.setContentType("text/plain");
-		resp.getWriter().println(content_string);
+		try {
+			resp.getWriter().println(content_string);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public List<TournamentDataBean> getMatchResults(){
@@ -116,13 +133,93 @@ public class BaseServlet extends HttpServlet {
 		} else {
 			for (Entity tourney : tournaments){
 				TournamentDataBean tournament = new TournamentDataBean(tourney, false);
-				tournament.getResults();
+				tournament.getAllResults();
 				out.add(tournament);
 			}
 		}		
 		return out;	
 	}
 	
+	public void updateResultsCache(){
+		//called after a tournament to update the results in memcache
+		MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();	
+
+		log.warning("Updating tournament results in memcache.");
+		syncCache.put(resultsKey, getMatchResults());
+   	
+	}	
+	
+	
+public List<GladiatorDataBean> getGladiatorsForTraining(){
+		
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+		
+		int inCache = 0;
+		
+		List<Entity> results = null;
+		List<GladiatorDataBean> gladiatorsForTraining = new ArrayList<GladiatorDataBean>();
+		
+		Query q = new Query(gladiatorEntity).setKeysOnly();
+		q.setFilter(new FilterPredicate ("ownerKey", FilterOperator.NOT_EQUAL, null));
+		q.setFilter(new FilterPredicate ("status", FilterOperator.NOT_EQUAL, "DEAD"));
+		FetchOptions gladiator_training_check = FetchOptions.Builder.withChunkSize(BASE_NUMBER_OF_TRAINING_GLADIATORS);
+		results = datastore.prepare(q).asList(gladiator_training_check);
+		
+		for (Entity ent : results){
+			Entity temp = (Entity) syncCache.get(ent.getKey());
+			if (temp == null || !syncCache.contains(ent.getKey())){//not in cache
+				try {
+					temp = datastore.get(ent.getKey());
+				} catch (EntityNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else {
+				inCache += 1;
+			}
+			
+			if (temp != null){
+				GladiatorDataBean x = new GladiatorDataBean(temp);
+				if (!x.getCurrentTrainingFocus().equalsIgnoreCase("none")){
+					gladiatorsForTraining.add(x);
+				}				
+			}
+		}//end for
+		log.info("Found " + inCache + " gladiators in cache.");
+		if (gladiatorsForTraining == null || gladiatorsForTraining.isEmpty()){
+			return null;
+		} else {
+			return gladiatorsForTraining;
+		}
+	}
+	
+	public List<Entity> getGladiatorsOnSale(){//used in the gladiator market
+		
+		//first attempt to get from memcache
+		MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
+
+		List<Entity> results = null;
+		
+		results = (List<Entity>) syncCache.get(gladsRecruitsKey);
+		
+		if (results == null || !syncCache.contains(gladsRecruitsKey)){//not in cache. need to go to the DS
+			log.info("Recruits not in cache. getting from DS");
+			DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+			Query q = new Query(gladiatorEntity);
+			
+		    Filter unowned = new FilterPredicate("owner", FilterOperator.EQUAL, null);
+		    Filter alive = new FilterPredicate("status", FilterOperator.NOT_EQUAL, "DEAD");
+		    q.setFilter(CompositeFilterOperator.and(unowned, alive));
+		    
+		    FetchOptions gladiator_market_check = FetchOptions.Builder.withLimit(BASE_NUMBER_OF_TRAINING_GLADIATORS);
+		    results = datastore.prepare(q).asList(gladiator_market_check);
+		    if (TESTTOGGLE){log.info("total returned available recruits: " + results.size());}
+		}
+
+	    return results;
+	}
+
 	protected boolean uniqueGladiatorName(String gladName){//checks to ensure the name is available for the gladiator
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 			
@@ -138,7 +235,6 @@ public class BaseServlet extends HttpServlet {
         	return true;
         }
 	}
-
 	
 	public String getNextTournamentDate(){
 		Query tourneys = new Query(tournamentEntity);
@@ -167,7 +263,7 @@ public class BaseServlet extends HttpServlet {
 	// get a cookie value from the cookies array passed, set secure cookies using a basic hashing mechanism
 	// check a value against the hashing to ensure it is secure
     
-	public Boolean checkLogin(HttpServletRequest req) throws UnsupportedEncodingException{
+	public Boolean checkLogin(HttpServletRequest req){
 
 		if (req.getCookies() == null){
 			return false;
@@ -192,13 +288,15 @@ public class BaseServlet extends HttpServlet {
 		}
 	}
 	
-	public void refreshUserBean(HttpServletRequest req){
+	public void refreshUserBean(HttpServletRequest req) {//if it has been longer than the prescribed time limit, attempt to refresh the data on the userbean
 		if ((System.currentTimeMillis() - (Long)req.getSession().getAttribute(userDataRefresh)) > USER_DATA_REFRESH_TIME ){
 			UserDataBean refreshed = (UserDataBean) req.getSession().getAttribute(userBeanData);
 			refreshed.populateUserDataBean(refreshed.getUserName());
 			req.getSession().setAttribute(userBeanData, refreshed);
 			req.getSession().setAttribute(userDataRefresh, System.currentTimeMillis());
 			log.info("User Data Refreshed");
+		} else {
+			log.info("User Data refresh not required.");
 		}
 	}
 	
@@ -220,7 +318,7 @@ public class BaseServlet extends HttpServlet {
 		resp.addCookie(cook);
 	}
 	
-	public Boolean checkSecureCookie(String cookieValue) throws UnsupportedEncodingException{
+	public Boolean checkSecureCookie(String cookieValue){
 		String secureValue = "";
 		String baseValue = "";
 		if (cookieValue.indexOf("|") < 0){
@@ -256,7 +354,7 @@ public class BaseServlet extends HttpServlet {
 		return found;		
 	}
 	//used in creating secure cookies
-	private String getSecureValue(String value) throws UnsupportedEncodingException {
+	private String getSecureValue(String value) {
 
 		//this isn't a perfect implementation, but it should be sufficient for a cookie
 		StringBuffer sb = new StringBuffer();
@@ -270,7 +368,10 @@ public class BaseServlet extends HttpServlet {
 		       
 		    } catch (java.security.NoSuchAlgorithmException e) {
 		    	e.printStackTrace();
-		    }
+		    } catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
 		 return sb.toString();
 	}

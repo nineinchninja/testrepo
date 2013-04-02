@@ -7,6 +7,7 @@ package com.bloodandsand.core;
 import java.io.IOException;
 
 import java.util.Iterator;
+import java.util.List;
 
 import java.util.logging.Logger;
 
@@ -36,13 +37,13 @@ public class ReviewTraining extends BaseServlet {
 	
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 		      throws IOException, ServletException {
-		GladiatorDataBean shell = new GladiatorDataBean();
-		Iterator<GladiatorDataBean> gladsForTraining = shell.getGladiatorsForTraining().iterator();
+		
+		List<GladiatorDataBean> gladsForTraining = getGladiatorsForTraining();
 		if (gladsForTraining != null){
-			while (gladsForTraining.hasNext()){
-				gladsForTraining.next().attemptTraining();
+			for (GladiatorDataBean glad : gladsForTraining){
+				glad.attemptTraining();
 			}
-		}		
+		}	
 	}
 
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)

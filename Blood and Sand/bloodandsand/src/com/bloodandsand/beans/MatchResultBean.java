@@ -25,13 +25,15 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 	 * 
 	 */
 	protected static final Logger log = Logger.getLogger(MatchResultBean.class.getName());
-	private boolean logEnabled = true;
+	private boolean logEnabled = false;
 	
 	private static final long serialVersionUID = 5687618169542410632L;
 	private GladiatorDataBean challenger;
 	private GladiatorDataBean incumbant;
 	
 	private String winner;
+	
+	private long winnings = 0;
 	
 	private String incumbantName;
 	private String challengerName;
@@ -140,7 +142,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 	private String[] concedeDescription = {"%1$s cannot continue. %2$s drops to one knee and raises %3$s hand in surrender. ", "Gasping and grimacing, %1$s drops %3$s weapon and admits defeat. ",
 			"%1$s falls to the sand, gasping for air and calling for the medic. %1$s concedes the fight. "};
 	
-	private String[] normalHitDescription = {"%1$s gets a lucky strike, just barely hitting ", "%1$s's %5$s just glances off", "%1$s grazes ", "%1$s slips %3$s %5$s weapon in close and knicks ",
+	private String[] normalHitDescription = {"%1$s gets a lucky strike, just barely hitting ", "%1$s's %5$s just glances off ", "%1$s grazes ", "%1$s slips %3$s %5$s weapon in close and knicks ",
 			"%1$s's %5$s marks ", "The crowd roars as %1$s's %5$s draws blood from ", "The crowd cheers as %1$s slips %3$s %5$s weapon in close and knicks ", 
 			"%1$s's %5$s leaves a mark on"};
 	
@@ -204,7 +206,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 		setUpBean();
 	}
 	
-	public MatchResultBean (GladiatorDataBean challenger, GladiatorDataBean incumbant, String challengerWeapon, String incumbantWeapon){
+	public MatchResultBean (GladiatorDataBean challenger, GladiatorDataBean incumbant, String challengerWeapon, String incumbantWeapon, long wager){
 		
 		this.challenger = challenger;
 		this.incumbant = incumbant;
@@ -217,6 +219,8 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 		
 		this.challengerWeapon = challengerWeapon;
 		this.incumbantWeapon = incumbantWeapon;
+		
+		this.winnings = wager + STANDARD_WIN_AMOUNT;
 		
 		setUpChallengerFormatter();
 		setUpIncumbantFormatter();
@@ -287,7 +291,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 	private String writerChallenger(String in){
 		Formatter formatter = new Formatter();
 		StringBuilder sb = new StringBuilder();	
-		log.info("String coming in: " + in);
+		if(logEnabled){log.info("String coming in: " + in);}
 		sb.append(formatter.format(in, challengerName, challengerSubject, challengerPossessive,  
 					challengerObject, challengerWeapon, challengerWeapon2));
 		formatter.close();
@@ -297,7 +301,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 	private String writerIncumbant(String in){
 		Formatter formatter = new Formatter();
 		StringBuilder sb = new StringBuilder();		
-		log.info("String coming in: " + in);
+		if(logEnabled){log.info("String coming in: " + in);}
 
 		sb.append(formatter.format(in, incumbantName, incumbantSubject, incumbantPossessive, 
 					incumbantObject, incumbantWeapon, incumbantWeapon2));
@@ -336,7 +340,7 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 		if (glad.getPersonality().equals("Clumsy")){			
 			opening = personalityClumsy[rng.nextInt(personalityClumsy.length)];
 		}		
-		log.info(opening);
+		if(logEnabled){log.info(opening);}
 		if (glad.key == challenger.key){
 			return writerChallenger(opening);
 		} else {
@@ -359,6 +363,10 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 		if (this.thisEntity.hasProperty("challengerStats")){
 			challengerStats = ((Text) this.thisEntity.getProperty("challengerStats")).getValue();
 		}
+		if (this.thisEntity.hasProperty("winnings")){
+			winnings = ((Long) this.thisEntity.getProperty("winnings"));
+		}
+		
 		
 		resultKey = this.thisEntity.getKey();
 	}
@@ -656,31 +664,31 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 
 	public void writeSummaryStats() {
 		// TODO Auto-generated method stub
-		challengerStats = "Summary stats:\n" + incumbantName + ":\n";
-		challengerStats += "Good attacks: " + incumbantHits + "\n";
-		challengerStats += "Misses: " + incumbantMisses + "\n";
-		challengerStats += "Critical hits: " + incumbantCriticals + "\n";
-		challengerStats += "Dodges: " + incumbantDodges + "\n";
-		challengerStats += "Blocks: " + incumbantBlocks + "\n";
-		challengerStats += "Criticals resisted: " + incumbantCritResists + "\n";
-		challengerStats += "Deathblows resisted: " + incumbantDeathResists + "\n";
-		challengerStats += "Continued despite wounds and exhaustion: " + incumbantContinues + " times." + "\n";
-		challengerStats += "Rested: " + incumbantRests + "times." + "\n";
-		challengerStats += "Ripostes: " + incumbantRipostes + "\n";
-		challengerStats += "Ripostes avoided: " + incumbantAvoids + "\n";
+		incumbantStats = "Summary stats:\n" + incumbantName + ":\n";
+		incumbantStats += "Good attacks: " + incumbantHits + "\n";
+		incumbantStats += "Misses: " + incumbantMisses + "\n";
+		incumbantStats += "Critical hits: " + incumbantCriticals + "\n";
+		incumbantStats += "Dodges: " + incumbantDodges + "\n";
+		incumbantStats += "Blocks: " + incumbantBlocks + "\n";
+		incumbantStats += "Criticals resisted: " + incumbantCritResists + "\n";
+		incumbantStats += "Deathblows resisted: " + incumbantDeathResists + "\n";
+		incumbantStats += "Continued despite wounds and exhaustion: " + incumbantContinues + " times." + "\n";
+		incumbantStats += "Rested: " + incumbantRests + "times." + "\n";
+		incumbantStats += "Ripostes: " + incumbantRipostes + "\n";
+		incumbantStats += "Ripostes avoided: " + incumbantAvoids + "\n";
 		
-		incumbantStats += "Summary stats:\n" + challengerName + ":\n";
-		incumbantStats += "Good attacks: " + challengerHits + "\n";
-		incumbantStats += "Misses: " + challengerMisses + "\n";
-		incumbantStats += "Critical hits: " + challengerCriticals + "\n";
-		incumbantStats += "Dodges: " + challengerDodges + "\n";
-		incumbantStats += "Blocks: " + challengerBlocks + "\n";
-		incumbantStats += "Criticals resisted: " + challengerCritResists + "\n";
-		incumbantStats += "Deathblows resisted: " + challengerDeathResists + "\n";
-		incumbantStats += "Continued despite wounds and exhaustion: " + challengerContinues + " times." + "\n";
-		incumbantStats += "Rested: " + challengerRests + "times." + "\n";
-		incumbantStats += "Ripostes: " + challengerRipostes + "\n";
-		incumbantStats += "Ripostes avoided: " + challengerAvoids + "\n";
+		challengerStats += "Summary stats:\n" + challengerName + ":\n";
+		challengerStats += "Good attacks: " + challengerHits + "\n";
+		challengerStats += "Misses: " + challengerMisses + "\n";
+		challengerStats += "Critical hits: " + challengerCriticals + "\n";
+		challengerStats += "Dodges: " + challengerDodges + "\n";
+		challengerStats += "Blocks: " + challengerBlocks + "\n";
+		challengerStats += "Criticals resisted: " + challengerCritResists + "\n";
+		challengerStats += "Deathblows resisted: " + challengerDeathResists + "\n";
+		challengerStats += "Continued despite wounds and exhaustion: " + challengerContinues + " times." + "\n";
+		challengerStats += "Rested: " + challengerRests + "times." + "\n";
+		challengerStats += "Ripostes: " + challengerRipostes + "\n";
+		challengerStats += "Ripostes avoided: " + challengerAvoids + "\n";
 		
 		thisEntity.setProperty("incumbantStats", new Text(incumbantStats));
 		thisEntity.setProperty("challengerStats", new Text(challengerStats));
@@ -719,7 +727,6 @@ public class MatchResultBean extends CoreBean implements java.io.Serializable {
 			challengerStatus = "Exhausted";
 		} else {
 			incumbantStatus="Exhausted";
-
 		}
 	}
 

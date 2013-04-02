@@ -38,7 +38,7 @@ public class ChallengeReviewServlet extends BaseServlet {
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 		      throws IOException, ServletException {
 		//check for login status and bean
-		//HttpSession sess = req.getSession();
+
 		if (!checkLogin(req) || req.getSession().getAttribute(userBeanData) == null){			
 			resp.sendRedirect(loginPage);
 		} else {

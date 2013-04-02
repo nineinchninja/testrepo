@@ -21,7 +21,7 @@ public class LudusDataBean extends CoreBean implements java.io.Serializable{
 	/**
 	 * 
 	 */
-	private boolean logEnabled = true;
+	private boolean logEnabled = false;
 	
 	private static final long serialVersionUID = -2520748803858400976L;
 	private long availableGold;
